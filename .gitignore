@@ -5,3 +5,4 @@ project/plugins/project/
 project/target/
 .cache
 .lib/
+project/
