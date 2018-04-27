@@ -1,8 +1,8 @@
 .idea/
 dist/*
-target/
+**/target/
 project/plugins/project/
-project/target/
+**/project/target/
 .cache
 .lib/
-project/
+**/project/
