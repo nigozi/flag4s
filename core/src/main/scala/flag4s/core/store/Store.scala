@@ -2,7 +2,7 @@ package flag4s.core.store
 
 import cats.effect.IO
 
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, Json}
 
 case class StoredValue[T](value: T)
 
@@ -10,6 +10,8 @@ trait Store {
   def put[T: Encoder](key: String, value: T): IO[Either[Throwable, T]]
 
   def get[T: Decoder](key: String): IO[Either[Throwable, T]]
+
+  def rawValue(key: String): IO[Either[Throwable, Json]]
 
   def keys(): IO[Either[Throwable, List[String]]]
 

@@ -11,7 +11,8 @@ import pureconfig.loadConfig
 import pureconfig.error.ConfigReaderFailures
 
 import flag4s.core.store.Store._
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, Json}
+import io.circe.syntax._
 
 case class Config(features: Map[String, String])
 
@@ -36,6 +37,11 @@ class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
 
   override def remove(key: String): IO[Either[Throwable, Unit]] =
     Left(error("removing a key is not supported in config store")).pure[IO]
+
+  override def rawValue(key: String): IO[Either[Throwable, Json]] =
+    config
+      .flatMap(c => Either.fromOption(c.features.get(key).map(_.asJson), ""))
+      .leftMap(e => new RuntimeException(e.toString)).pure[IO]
 }
 
 object ConfigStore {

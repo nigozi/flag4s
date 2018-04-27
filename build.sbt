@@ -7,6 +7,8 @@ version := "0.1"
 val circeVersion = "0.9.3"
 val http4sVersion = "0.18.9"
 
+scalacOptions in ThisBuild += "-Ypartial-unification"
+
 lazy val root = project
   .in(file("."))
   .aggregate(

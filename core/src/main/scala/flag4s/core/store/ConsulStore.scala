@@ -9,7 +9,7 @@ import org.http4s.client.{blaze, Client}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.io._
 
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
@@ -36,6 +36,13 @@ class ConsulStore(
     for {
       resp <- client.expect[String](req).attempt
     } yield resp.flatMap(r => decode[StoredValue[T]](r).map(_.value))
+  }
+
+  def rawValue(key: String): IO[Either[Throwable, Json]] = {
+    val req = GET(Uri.unsafeFromString(s"$base_uri$basePath$key?raw=true"))
+    for {
+      resp <- client.expect[Json](req).attempt
+    } yield resp
   }
 
   override def keys(): IO[Either[Throwable, List[String]]] = {

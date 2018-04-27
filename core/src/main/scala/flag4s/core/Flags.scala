@@ -6,7 +6,7 @@ import cats.syntax.applicative._
 import flag4s.core.store.Store
 import io.circe.{Decoder, Encoder}
 
-case class Flag(key: String) {
+case class Flags(key: String) {
   def enabled(implicit store: Store): IO[Boolean] = is(true)
 
   def ifEnabled[A: Decoder](f: => A)(implicit store: Store): IO[Option[A]] = ifIs(true)(f)

@@ -1,5 +1,5 @@
 package flag4s
 
 package object core {
-  def flag(key: String): Flag = new Flag(key)
+  def flag(key: String): Flags = new Flags(key)
 }

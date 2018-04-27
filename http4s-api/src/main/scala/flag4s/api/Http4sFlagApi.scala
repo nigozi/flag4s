@@ -1,36 +1,55 @@
 package flag4s.api
 
-import scala.concurrent.ExecutionContext
-
 import cats.effect._
-import org.http4s.HttpService
+import cats.instances.list._
+import cats.instances.either._
+import cats.syntax.traverse._
+import org.http4s.{HttpService, Response}
 import org.http4s.circe._
 import org.http4s.dsl.io._
 
 import flag4s.core.store.Store
-import io.circe.Json
+import io.circe._
+import io.circe.generic.auto._
 import io.circe.syntax._
 
-case class KeyVal(key: String, value: Json)
+case class Flag(key: String, value: Json)
+
+sealed trait FlagValue {
+  def jsValue: Json
+}
 
 object Http4sFlagApi {
-
-  def flagService(implicit store: Store, ec: ExecutionContext): HttpService[IO] =
+  def service(implicit store: Store): HttpService[IO] =
     HttpService[IO] {
-      case POST -> Root / "flags" / key / "enable" =>
-        store.put(key, true).unsafeRunSync() match {
-          case Right(v) => Ok(v.asJson)
-          case Left(e) => NotFound(toJson(e))
-        }
+      case POST -> Root / "flags" / key / "enable" => switchFlag(key, true)
+      case POST -> Root / "flags" / key / "disable" => switchFlag(key, false)
+      case GET -> Root / "flags" / key => getFlag(key) match {
+        case Right(v) => Ok(v.asJson)
+        case Left(e) => BadRequest(e.toString)
+      }
       case GET -> Root / "flags" =>
-        store.keys().unsafeRunSync().map(_.map(mapKey).flatten) match {
-          case Right(kv) => Ok(kv.toMap.asJson)
+        store.keys().unsafeRunSync().flatMap(a => a.traverse(getFlag)) match {
+          case Right(kv) => Ok(kv.asJson)
           case Left(e) => BadRequest(toJson(e))
         }
     }
 
-  def toJson(e: Throwable): Json = e.getMessage.asJson
+  def getFlag(key: String)(implicit store: Store): Either[Throwable, Flag] =
+    store.rawValue(key).unsafeRunSync().map(b => Flag(key, decodeFlag(b)))
 
-  def mapKey(k: String)(implicit store: Store): Option[(String, String)] =
-    store.get[String](k).unsafeRunSync().toOption.map(a => (k, a))
+  def decodeFlag(body: Json): Json = {
+    body.hcursor.downField("value").focus.getOrElse(Json.Null)
+  }
+
+  def mapFlag[T: Decoder](k: String)(implicit store: Store): Option[(String, Json)] =
+    store.rawValue(k).unsafeRunSync().toOption.map(a => (k, a))
+
+  def switchFlag[T: Encoder](key: String, value: T)(implicit store: Store): IO[Response[IO]] =
+    store.put(key, value).unsafeRunSync() match {
+      case Right(v) => Ok(v.asJson)
+      case Left(e) => NotFound(toJson(e))
+    }
+
+  def toJson(e: Throwable): Json = e.getMessage.asJson
 }
