@@ -26,11 +26,11 @@ object Http4sFlagApi {
       case POST -> Root / "flags" / key / "disable" => switchFlag(key, false)
       case GET -> Root / "flags" / key => getFlag(key) match {
         case Right(v) => Ok(v.asJson)
-        case Left(e) => BadRequest(e.toString)
+        case Left(e) => BadRequest(toJson(e))
       }
       case GET -> Root / "flags" =>
         store.keys().unsafeRunSync().flatMap(a => a.traverse(getFlag)) match {
-          case Right(kv) => Ok(kv.asJson)
+          case Right(flags) => Ok(flags.asJson)
           case Left(e) => BadRequest(toJson(e))
         }
     }
@@ -38,12 +38,7 @@ object Http4sFlagApi {
   def getFlag(key: String)(implicit store: Store): Either[Throwable, Flag] =
     store.rawValue(key).unsafeRunSync().map(b => Flag(key, decodeFlag(b)))
 
-  def decodeFlag(body: Json): Json = {
-    body.hcursor.downField("value").focus.getOrElse(Json.Null)
-  }
-
-  def mapFlag[T: Decoder](k: String)(implicit store: Store): Option[(String, Json)] =
-    store.rawValue(k).unsafeRunSync().toOption.map(a => (k, a))
+  def decodeFlag(body: Json): Json = body.hcursor.downField("value").focus.getOrElse(Json.Null)
 
   def switchFlag[T: Encoder](key: String, value: T)(implicit store: Store): IO[Response[IO]] =
     store.put(key, value).unsafeRunSync() match {
