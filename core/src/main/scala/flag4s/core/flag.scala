@@ -22,6 +22,8 @@ case class DoubleValue(d: Double) extends FlagValue
 case class BooleanValue(b: Boolean) extends FlagValue
 
 trait FlagOps {
+  import FlagOps._
+
   def flag[A](key: String)(implicit store: Store): IO[Either[Throwable, Flag]] =
     for {
       rv <- store.rawValue(key)
@@ -57,7 +59,7 @@ trait FlagOps {
       case _ => Left(new RuntimeException(s"${flag.v} is not equal to $value")).pure[IO]
     }
 
-  def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Unit]] = store.put(flag.k, value).map(_ => Right((): Unit))
+  def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, A]] = store.put(flag.k, value)
 
   def toJsonFag(f: Flag): JsonFlag = f.v match {
     case StringValue(s) => JsonFlag(f.k, s.asJson)
@@ -65,7 +67,9 @@ trait FlagOps {
     case BooleanValue(b) => JsonFlag(f.k, b.asJson)
     case _ => JsonFlag(f.k, Json.Null)
   }
+}
 
+object FlagOps extends FlagOps {
   private def decodeFlag(key: String, value: Json): Either[Throwable, Flag] =
     for {
       v <- readVal(value)
@@ -85,6 +89,4 @@ trait FlagOps {
     }
   }
 }
-
-object FlagOps extends FlagOps
 

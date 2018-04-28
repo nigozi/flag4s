@@ -24,15 +24,17 @@ class RedisStoreSpec
   "store" should {
     "successfully store a key/value" in {
       implicit val store = RedisStore("localhost", port)
+      val key = randomKey
       for {
-        res <- store.put("save-key", true)
+        res <- store.put(key, true)
       } yield res.isRight shouldBe true
     }
 
     "successfully get a key's value" in {
       implicit val store = RedisStore("localhost", port)
+      val key = randomKey
       for {
-        res <- store.put("get-key", "value")
+        res <- store.put(key, "value")
       } yield {
         res.isRight shouldBe true
         res.toOption.get shouldBe "value"
@@ -41,13 +43,15 @@ class RedisStoreSpec
 
     "successfully get list of key/values" in {
       implicit val store = RedisStore("localhost", port)
+      val key1 = randomKey
+      val key2 = randomKey
       for {
-        _ <- store.put("list-key1", true)
-        _ <- store.put("list-key2", true)
+        _ <- store.put(key1, true)
+        _ <- store.put(key2, true)
         res <- store.keys()
       } yield {
         res.isRight shouldBe true
-        res.right.get should contain allElementsOf List("list-key1", "list-key2")
+        res.right.get should contain allElementsOf List(key1, key2)
       }
     }
   }
