@@ -4,12 +4,12 @@ import cats.effect.IO
 
 import io.circe.{Decoder, Encoder, Json}
 
-case class StoredValue[T](value: T)
+case class StoredValue[A](value: A)
 
 trait Store {
-  def put[T: Encoder](key: String, value: T): IO[Either[Throwable, T]]
+  def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]]
 
-  def get[T: Decoder](key: String): IO[Either[Throwable, T]]
+  def get[A: Decoder](key: String): IO[Either[Throwable, A]]
 
   def rawValue(key: String): IO[Either[Throwable, Json]]
 

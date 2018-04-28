@@ -24,7 +24,7 @@ lazy val core = project
       "org.typelevel" %% "cats-core" % "1.1.0",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
-      "io.circe" %% "circe-parser" % circeVersion,
+      "io.circe" %% "circe-parser" % circeVersion,,
       "org.http4s" %% "http4s-core" % http4sVersion,
       "org.http4s" %% "http4s-blaze-client" % http4sVersion,
       "org.http4s" %% "http4s-dsl" % http4sVersion,

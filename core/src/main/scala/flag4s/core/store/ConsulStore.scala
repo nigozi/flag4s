@@ -24,18 +24,18 @@ class ConsulStore(
 
   val client: Client[IO] = blaze.Http1Client[IO]().unsafeRunSync()
 
-  override def put[T: Encoder](key: String, value: T): IO[Either[Throwable, T]] = {
+  override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] = {
     val req = PUT(Uri.unsafeFromString(s"$base_uri$basePath$key")).withBody(StoredValue(value).asJson)
     for {
       resp <- client.expect[String](req).attempt
     } yield resp.map(_ => value)
   }
 
-  override def get[T: Decoder](key: String): IO[Either[Throwable, T]] = {
+  override def get[A: Decoder](key: String): IO[Either[Throwable, A]] = {
     val req = GET(Uri.unsafeFromString(s"$base_uri$basePath$key?raw=true"))
     for {
       resp <- client.expect[String](req).attempt
-    } yield resp.flatMap(r => decode[StoredValue[T]](r).map(_.value))
+    } yield resp.flatMap(r => decode[StoredValue[A]](r).map(_.value))
   }
 
   def rawValue(key: String): IO[Either[Throwable, Json]] = {

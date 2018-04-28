@@ -22,15 +22,15 @@ class RedisStore(
 
   val client = new RedisClient(host, port)
 
-  override def put[T: Encoder](key: String, value: T): IO[Either[Throwable, T]] =
+  override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] =
     if (client.set(key, StoredValue(value).asJson))
       Right(value).pure[IO]
     else
       Left(error(s"failed to store flag $key")).pure[IO]
 
-  override def get[T: Decoder](key: String): IO[Either[Throwable, T]] =
+  override def get[A: Decoder](key: String): IO[Either[Throwable, A]] =
     client.get[String](key)
-      .map(a => decode[StoredValue[T]](trim(a)).map(_.value))
+      .map(a => decode[StoredValue[A]](trim(a)).map(_.value))
       .getOrElse(Left(error(s"flag $key not found")))
       .pure[IO]
 

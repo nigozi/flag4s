@@ -19,14 +19,14 @@ case class Config(features: Map[String, String])
 class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
   val config: Either[ConfigReaderFailures, Config] = loadConfig[Config](new File(path).toPath)
 
-  override def put[T: Encoder](key: String, value: T): IO[Either[Throwable, T]] =
+  override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] =
     Left(error("altering the value is not supported in config store")).pure[IO]
 
-  override def get[T: Decoder](key: String): IO[Either[Throwable, T]] =
+  override def get[A: Decoder](key: String): IO[Either[Throwable, A]] =
     config
       .flatMap(c => Either.fromOption(c.features.get(key), s"key $key not found"))
       .leftMap(_ => error(s"key $key not found"))
-      .map(_.asInstanceOf[T])
+      .map(_.asInstanceOf[A])
       .pure[IO]
 
   override def keys(): IO[Either[Throwable, List[String]]] =
