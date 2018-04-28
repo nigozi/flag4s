@@ -7,6 +7,9 @@ import cats.syntax.either._
 import flag4s.core.store.Store
 import flag4s.core.store.Store._
 import io.circe.{Encoder, Json}
+import io.circe.syntax._
+
+case class JsonFlag(key: String, value: Json)
 
 case class Flag(k: String, v: FlagValue)
 
@@ -18,11 +21,7 @@ case class DoubleValue(d: Double) extends FlagValue
 
 case class BooleanValue(b: Boolean) extends FlagValue
 
-case class JsonValue(js: Json) extends FlagValue
-
-case class JsonFlag(key: String, value: Json)
-
-object Flag {
+trait FlagOps {
   def flag[A](key: String)(implicit store: Store): IO[Either[Throwable, Flag]] =
     for {
       rv <- store.rawValue(key)
@@ -41,32 +40,43 @@ object Flag {
       case _ => Left(new RuntimeException(s"${flag.v} is not equal to $value")).pure[IO]
     }
 
-  def is[A](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Boolean]] =
+  def is[A](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Boolean]] = {
+    def eq[T](v1: T, v2: T): IO[Either[Throwable, Boolean]] = Right(v1 == v2).pure[IO]
+
     flag.v match {
-      case StringValue(v) => Right(v == value.toString).pure[IO]
-      case BooleanValue(v) => Right(v == value).pure[IO]
-      case DoubleValue(v) => Right(v == value).pure[IO]
+      case StringValue(v) => eq(v, value)
+      case BooleanValue(v) => eq(v, value)
+      case DoubleValue(v) => eq(v, value)
       case _ => Left(error("unknown flag type")).pure[IO]
     }
-
-  def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Unit]] =
-    store.put(flag.k, value).map(_ => Right((): Unit))
-
-  private def decodeFlag(key: String, value: Json): Either[Throwable, Flag] = {
-    decodeVal(value).map(v => Flag(key, v))
   }
+
+  def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Unit]] = store.put(flag.k, value).map(_ => Right((): Unit))
+
+  def toJsonFag(f: Flag): JsonFlag = f.v match {
+    case StringValue(s) => JsonFlag(f.k, s.asJson)
+    case DoubleValue(d) => JsonFlag(f.k, d.asJson)
+    case BooleanValue(b) => JsonFlag(f.k, b.asJson)
+    case _ => JsonFlag(f.k, Json.Null)
+  }
+
+  private def decodeFlag(key: String, value: Json): Either[Throwable, Flag] = decodeVal(value).map(v => Flag(key, v))
 
   private def decodeVal(body: Json): Either[Throwable, FlagValue] = {
     def readVal = Either.fromOption(body.hcursor.downField("value").focus, new RuntimeException("failed to parse the value"))
 
+    def convert[A](js: Json)(f: Json => Option[A]) = Either.fromOption(f.apply(js), new RuntimeException("couldn't parse the flag value"))
+
     readVal.flatMap { v =>
       v.name match {
-        case "Boolean" => Either.fromOption(v.asBoolean.map(BooleanValue), new RuntimeException("couldn't parse the flag value as boolean"))
-        case "String" => Either.fromOption(v.asString.map(StringValue), new RuntimeException("couldn't parse the flag value as string"))
-        case "Number" => Either.fromOption(v.asNumber.map(_.toDouble).map(DoubleValue), new RuntimeException("couldn't parse the flag value as double"))
+        case "Boolean" => convert(v)(js => js.asBoolean.map(BooleanValue))
+        case "String" => convert(v)(js => js.asString.map(StringValue))
+        case "Number" => convert(v)(js => js.asNumber.map(_.toDouble).map(DoubleValue))
         case _ => Left(new RuntimeException("unknown type"))
       }
     }
   }
 }
+
+object FlagOps extends FlagOps
 

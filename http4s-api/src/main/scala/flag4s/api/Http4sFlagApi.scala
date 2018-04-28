@@ -31,17 +31,17 @@ object Http4sFlagApi {
       case GET -> Root / "flags" / key =>
         getFlag(key) match {
           case Right(v) => Ok(v.asJson)
-          case Left(e) => BadRequest(toJson(e))
+          case Left(e) => BadRequest(errJson(e))
         }
       case GET -> Root / "flags" =>
         store.keys().unsafeRunSync().flatMap(a => a.traverse(getFlag)) match {
           case Right(flags) => Ok(flags.asJson)
-          case Left(e) => BadRequest(toJson(e))
+          case Left(e) => BadRequest(errJson(e))
         }
       case DELETE -> Root / "flags" / key =>
         store.remove(key).unsafeRunSync() match {
           case Right(_) => Ok()
-          case Left(e) => BadRequest(toJson(e))
+          case Left(e) => BadRequest(errJson(e))
         }
     }
 
@@ -52,18 +52,15 @@ object Http4sFlagApi {
       exf.hcursor.downField("value").focus.map(_.name == value.asJson.name), new RuntimeException("")
     )
 
-    val response = for {
-      exf <- store.rawValue(key)
-      valid <- exf.flatMap(validateType).toOption.getOrElse(true).pure[IO]
-      res <- if (valid) store.put(key, value) else Left(new RuntimeException("type mismatch")).pure[IO]
-    } yield res match {
-      case Right(r) => Ok(r.asJson)
-      case Left(e) => BadRequest(toJson(e))
-    }
-
-    response.unsafeRunSync()
+    (for {
+        exf <- store.rawValue(key)
+        valid <- exf.flatMap(validateType).toOption.getOrElse(true).pure[IO]
+        res <- if (valid) store.put(key, value) else Left(new RuntimeException("type mismatch")).pure[IO]
+      } yield res match {
+        case Right(r) => Ok(r.asJson)
+        case Left(e) => BadRequest(errJson(e))
+      }).unsafeRunSync()
   }
 
-
-  def toJson(e: Throwable): Json = e.getMessage.asJson
+  private def errJson(e: Throwable): Json = e.getMessage.asJson
 }
