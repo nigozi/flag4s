@@ -30,15 +30,15 @@ trait FlagOps {
   def fatalFlag[A](key: String)(implicit store: Store): Flag =
     flag(key).unsafeRunSync().valueOr(sys.error(s"flag $key not found"))
 
+  def newFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, Flag]] =
+    for {
+      exf <- store.rawValue(key)
+      res <- if (exf.isRight) Left(error(s"flag $key already exists")).pure[IO] else store.put(key, value)
+    } yield res.flatMap(_ => decodeVal(value.asJson).map(Flag(key, _)))
+
   def enabled[A](flag: Flag)(implicit store: Store): IO[Either[Throwable, Boolean]] = is(flag, true)
 
   def ifEnabled[A, B](flag: Flag)(f: => B)(implicit store: Store): IO[Either[Throwable, B]] = ifIs(flag, true)(f)
-
-  def ifIs[A, B](flag: Flag, value: A)(f: => B)(implicit store: Store): IO[Either[Throwable, B]] =
-    is(flag, value).flatMap {
-      case Right(true) => Right(f).pure[IO]
-      case _ => Left(new RuntimeException(s"${flag.v} is not equal to $value")).pure[IO]
-    }
 
   def is[A](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Boolean]] = {
     def eq[T](v1: T, v2: T): IO[Either[Throwable, Boolean]] = Right(v1 == v2).pure[IO]
@@ -51,6 +51,12 @@ trait FlagOps {
     }
   }
 
+  def ifIs[A, B](flag: Flag, value: A)(f: => B)(implicit store: Store): IO[Either[Throwable, B]] =
+    is(flag, value).flatMap {
+      case Right(true) => Right(f).pure[IO]
+      case _ => Left(new RuntimeException(s"${flag.v} is not equal to $value")).pure[IO]
+    }
+
   def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Unit]] = store.put(flag.k, value).map(_ => Right((): Unit))
 
   def toJsonFag(f: Flag): JsonFlag = f.v match {
@@ -60,20 +66,22 @@ trait FlagOps {
     case _ => JsonFlag(f.k, Json.Null)
   }
 
-  private def decodeFlag(key: String, value: Json): Either[Throwable, Flag] = decodeVal(value).map(v => Flag(key, v))
+  private def decodeFlag(key: String, value: Json): Either[Throwable, Flag] =
+    for {
+      v <- readVal(value)
+      dv <- decodeVal(v).map(v => Flag(key, v))
+    } yield dv
 
-  private def decodeVal(body: Json): Either[Throwable, FlagValue] = {
-    def readVal = Either.fromOption(body.hcursor.downField("value").focus, new RuntimeException("failed to parse the value"))
+  private def readVal(js: Json): Either[Throwable, Json] = Either.fromOption(js.hcursor.downField("value").focus, new RuntimeException("failed to parse the value"))
 
+  private def decodeVal(v: Json): Either[Throwable, FlagValue] = {
     def convert[A](js: Json)(f: Json => Option[A]) = Either.fromOption(f.apply(js), new RuntimeException("couldn't parse the flag value"))
 
-    readVal.flatMap { v =>
-      v.name match {
-        case "Boolean" => convert(v)(js => js.asBoolean.map(BooleanValue))
-        case "String" => convert(v)(js => js.asString.map(StringValue))
-        case "Number" => convert(v)(js => js.asNumber.map(_.toDouble).map(DoubleValue))
-        case _ => Left(new RuntimeException("unknown type"))
-      }
+    v.name match {
+      case "Boolean" => convert(v)(js => js.asBoolean.map(BooleanValue))
+      case "String" => convert(v)(js => js.asString.map(StringValue))
+      case "Number" => convert(v)(js => js.asNumber.map(_.toDouble).map(DoubleValue))
+      case _ => Left(new RuntimeException("unknown type"))
     }
   }
 }

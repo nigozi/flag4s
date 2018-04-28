@@ -4,6 +4,7 @@ import cats.effect.IO
 import cats.syntax.applicative._
 import cats.syntax.either._
 
+import flag4s.core.StringValue
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.parser.decode
@@ -33,5 +34,5 @@ class InMemoryStore extends Store {
       .pure[IO]
 
   override def rawValue(key: String): IO[Either[Throwable, Json]] =
-    Either.fromOption(map.get(key).map(_.asJson), error(s"flag $key not found")).pure[IO]
+    Either.fromOption(map.get(key).map(v => StringValue(v).asJson), error(s"flag $key not found")).pure[IO]
 }
