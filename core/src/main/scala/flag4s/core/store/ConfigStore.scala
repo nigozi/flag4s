@@ -17,22 +17,21 @@ import io.circe.syntax._
 case class Config(features: Map[String, String])
 
 class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
-  val config: Either[ConfigReaderFailures, Config] = loadConfig[Config](new File(path).toPath)
+  val config: Either[Throwable, Config] =
+    loadConfig[Config](new File(path).toPath).leftMap(e => error(e.head.description))
 
   override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] =
-    Left(error("altering the value is not supported in config store")).pure[IO]
+    Left(error("value modification is not supported in config store")).pure[IO]
 
   override def get[A: Decoder](key: String): IO[Either[Throwable, A]] =
     config
-      .flatMap(c => Either.fromOption(c.features.get(key), s"key $key not found"))
-      .leftMap(_ => error(s"key $key not found"))
+      .flatMap(c => Either.fromOption(c.features.get(key), error(s"key $key not found")))
       .map(_.asInstanceOf[A])
       .pure[IO]
 
   override def keys(): IO[Either[Throwable, List[String]]] =
     config
       .map(_.features.keySet.toList)
-      .leftMap(e => error(e.head.description))
       .pure[IO]
 
   override def remove(key: String): IO[Either[Throwable, Unit]] =
@@ -40,8 +39,8 @@ class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
 
   override def rawValue(key: String): IO[Either[Throwable, Json]] =
     config
-      .flatMap(c => Either.fromOption(c.features.get(key).map(_.asJson), ""))
-      .leftMap(e => new RuntimeException(e.toString)).pure[IO]
+      .flatMap(c => Either.fromOption(c.features.get(key).map(_.asJson), error(s"key $key not found")))
+      .pure[IO]
 }
 
 object ConfigStore {

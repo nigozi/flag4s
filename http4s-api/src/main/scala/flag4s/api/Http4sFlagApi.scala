@@ -2,16 +2,14 @@ package flag4s.api
 
 import cats.effect._
 import cats.instances.either._
-import cats.instances.list._
-import cats.syntax.applicative._
 import cats.syntax.either._
 import org.http4s.{EntityDecoder, HttpService, Response}
 import org.http4s.circe._
 import org.http4s.dsl.io._
 
-import flag4s.core.store.Store._
 import flag4s.core._
 import flag4s.core.store.Store
+import flag4s.core.store.Store._
 import io.circe.{Encoder, _}
 import io.circe.Encoder._
 import io.circe.generic.auto._
@@ -49,18 +47,13 @@ object Http4sFlagApi {
     }
 
   def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Response[IO]] = {
-    def validateType(exf: Json): Either[Throwable, Boolean] = Either.fromOption(
-      exf.hcursor.downField("value").focus.map(_.name == value.asJson.name), new RuntimeException("")
-    )
+    val valid = flag(key).unsafeRunSync().map(f => validateType(f, value)).toOption.getOrElse(true)
+    val res = if (valid) store.put(key, value).unsafeRunSync() else new RuntimeException("type mismatch!").asLeft
 
-    (for {
-      exf <- store.rawValue(key)
-      valid <- exf.flatMap(validateType).toOption.getOrElse(true).pure[IO]
-      res <- if (valid) store.put(key, value) else Left(new RuntimeException("type mismatch")).pure[IO]
-    } yield res match {
+    res match {
       case Right(r) => Ok(r.asJson)
       case Left(e) => BadRequest(errJson(e))
-    }).unsafeRunSync()
+    }
   }
 
   private def errJson(e: Throwable): Json = e.getMessage.asJson

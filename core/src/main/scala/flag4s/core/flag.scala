@@ -45,7 +45,7 @@ trait FlagOps {
   def newFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, Flag]] =
     for {
       exf <- store.rawValue(key)
-      res <- if (exf.isRight) Left(error(s"flag $key already exists")).pure[IO] else store.put(key, value)
+      res <- if (exf.isRight) IO.pure(error(s"flag $key already exists").asLeft) else store.put(key, value)
     } yield res.flatMap(_ => jsonToFlagValue(value.asJson).map(Flag(key, _)))
 
   def enabled[A](flag: Flag)(implicit store: Store): IO[Either[Throwable, Boolean]] = is(flag, true)
@@ -59,10 +59,12 @@ trait FlagOps {
   def ifIs[A: Encoder, B](flag: Flag, value: A)(f: => B)(implicit store: Store): IO[Either[Throwable, B]] =
     is(flag, value).flatMap {
       case Right(true) => Right(f).pure[IO]
-      case _ => Left(new RuntimeException(s"${flag.v} is not equal to $value")).pure[IO]
+      case _ => IO.pure(new RuntimeException(s"${flag.v} is not equal to $value").asLeft)
     }
 
   def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, A]] = store.put(flag.k, value)
+
+  def validateType[A: Encoder](flag: Flag, value: A): Boolean = flag.toJsonFlag.value.name == value.asJson.name
 }
 
 object FlagOps extends FlagOps
