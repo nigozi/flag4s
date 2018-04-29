@@ -20,11 +20,12 @@ lazy val core = project
   .in(file("core"))
   .settings(
     description := "Core flag4s library",
+    name := "flag4s-core",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "1.1.0",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
-      "io.circe" %% "circe-parser" % circeVersion,,
+      "io.circe" %% "circe-parser" % circeVersion,
       "org.http4s" %% "http4s-core" % http4sVersion,
       "org.http4s" %% "http4s-blaze-client" % http4sVersion,
       "org.http4s" %% "http4s-dsl" % http4sVersion,
@@ -39,10 +40,10 @@ lazy val core = project
 
 lazy val http4s = project
   .in(file("http4s-api"))
-  .dependsOn(
-    core
-  ).settings(
+  .dependsOn(core % "compile->compile;test->test")
+  .settings(
   description := "Core flag4s library",
+  name := "flag4s-api-http4s",
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-core" % "1.1.0",
     "io.circe" %% "circe-core" % circeVersion,

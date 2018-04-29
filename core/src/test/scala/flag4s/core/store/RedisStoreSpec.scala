@@ -4,6 +4,7 @@ import com.github.sebruck.EmbeddedRedis
 import org.scalatest.WordSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import flag4s.core.FeatureSpec
 import redis.embedded.RedisServer
 
 class RedisStoreSpec

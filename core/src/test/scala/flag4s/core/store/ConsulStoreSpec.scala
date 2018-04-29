@@ -11,6 +11,7 @@ import org.http4s.circe._
 import org.http4s.client.Client
 import org.scalatest.WordSpec
 
+import flag4s.core.FeatureSpec
 import io.circe.generic.auto._
 import io.circe.syntax._
 

@@ -1,7 +1,9 @@
 package flag4s.core.store
 
 import cats.effect.IO
+import cats.syntax.either._
 
+import flag4s.core._
 import io.circe.{Decoder, Encoder, Json}
 
 case class StoredValue[A](value: A)
@@ -19,5 +21,14 @@ trait Store {
 }
 
 object Store {
+
   def error(message: String): Throwable = new RuntimeException(message)
+
+  def jsonFlag(key: String)(implicit store: Store): IO[Either[Throwable, JsonFlag]] =
+    for {
+      flag <- flag(key)
+    } yield flag.map(_.toJsonFlag)
+
+  def fatalJsonFlag(key: String)(implicit store: Store): JsonFlag =
+    jsonFlag(key).unsafeRunSync().valueOr(e => sys.error(e.getMessage))
 }

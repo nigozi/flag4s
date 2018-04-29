@@ -6,8 +6,6 @@ import cats.effect.IO
 import cats.syntax.applicative._
 import org.scalatest.WordSpec
 
-import flag4s.core.store.{FeatureSpec, InMemoryStore}
-
 class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
   implicit val store: InMemoryStore = new InMemoryStore
 

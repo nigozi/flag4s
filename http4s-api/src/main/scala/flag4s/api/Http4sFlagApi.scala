@@ -5,11 +5,11 @@ import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.applicative._
 import cats.syntax.either._
-import cats.syntax.traverse._
 import org.http4s.{EntityDecoder, HttpService, Response}
 import org.http4s.circe._
 import org.http4s.dsl.io._
 
+import flag4s.core.store.Store._
 import flag4s.core._
 import flag4s.core.store.Store
 import io.circe.{Encoder, _}
@@ -29,13 +29,16 @@ object Http4sFlagApi {
           f <- req.decode[JsonFlag](fl => switchFlag(fl.key, fl.value))
         } yield f
       case GET -> Root / "flags" / key =>
-        getFlag(key) match {
-          case Right(v) => Ok(v.asJson)
-          case Left(e) => BadRequest(errJson(e))
+        jsonFlag(key).map {
+          case Right(v) => Ok(v.asJson).unsafeRunSync()
+          case Left(e) => NotFound(errJson(e)).unsafeRunSync()
         }
       case GET -> Root / "flags" =>
-        store.keys().unsafeRunSync().flatMap(a => a.traverse(getFlag)) match {
-          case Right(flags) => Ok(flags.asJson)
+        (for {
+          keys <- store.keys().unsafeRunSync()
+          flags <- keys.map(fatalJsonFlag).asRight
+        } yield flags.asJson) match {
+          case Right(r) => Ok(r)
           case Left(e) => BadRequest(errJson(e))
         }
       case DELETE -> Root / "flags" / key =>
@@ -45,21 +48,19 @@ object Http4sFlagApi {
         }
     }
 
-  def getFlag(key: String)(implicit store: Store): Either[Throwable, JsonFlag] = flag(key).unsafeRunSync().map(toJsonFag)
-
   def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Response[IO]] = {
     def validateType(exf: Json): Either[Throwable, Boolean] = Either.fromOption(
       exf.hcursor.downField("value").focus.map(_.name == value.asJson.name), new RuntimeException("")
     )
 
     (for {
-        exf <- store.rawValue(key)
-        valid <- exf.flatMap(validateType).toOption.getOrElse(true).pure[IO]
-        res <- if (valid) store.put(key, value) else Left(new RuntimeException("type mismatch")).pure[IO]
-      } yield res match {
-        case Right(r) => Ok(r.asJson)
-        case Left(e) => BadRequest(errJson(e))
-      }).unsafeRunSync()
+      exf <- store.rawValue(key)
+      valid <- exf.flatMap(validateType).toOption.getOrElse(true).pure[IO]
+      res <- if (valid) store.put(key, value) else Left(new RuntimeException("type mismatch")).pure[IO]
+    } yield res match {
+      case Right(r) => Ok(r.asJson)
+      case Left(e) => BadRequest(errJson(e))
+    }).unsafeRunSync()
   }
 
   private def errJson(e: Throwable): Json = e.getMessage.asJson

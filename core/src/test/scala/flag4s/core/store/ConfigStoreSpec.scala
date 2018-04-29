@@ -3,6 +3,8 @@ package flag4s.core.store
 import org.scalatest.WordSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import flag4s.core.FeatureSpec
+
 class ConfigStoreSpec extends WordSpec with FeatureSpec {
   private val configFile = getClass.getResource("/config/feature_set_1.conf")
   private val store = ConfigStore(configFile.getPath)

@@ -13,11 +13,10 @@ package object syntax {
 
     def ifEnabled[A](f: => A)(implicit store: Store): IO[Either[Throwable, A]] = FlagOps.ifEnabled(flag)(f)
 
-    def ifIs[A, B](value: A)(f: => B)(implicit store: Store, d: Decoder[A]): IO[Either[Throwable, B]] = FlagOps.ifIs(flag, value)(f)
+    def ifIs[A: Encoder, B](value: A)(f: => B)(implicit store: Store, d: Decoder[A]): IO[Either[Throwable, B]] = FlagOps.ifIs(flag, value)(f)
 
-    def is[A](value: A)(implicit store: Store): IO[Either[Throwable, Boolean]] = FlagOps.is(flag, value)
+    def is[A: Encoder](value: A)(implicit store: Store): IO[Either[Throwable, Boolean]] = FlagOps.is(flag, value)
 
     def set[A: Encoder](value: A)(implicit store: Store): IO[Either[Throwable, A]] = FlagOps.set(flag, value)
   }
-
 }

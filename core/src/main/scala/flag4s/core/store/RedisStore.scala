@@ -42,7 +42,8 @@ class RedisStore(
   override def keys(): IO[Either[Throwable, List[String]]] =
     Either.fromOption(client.keys().map(_.flatten), error("operation failed!")).pure[IO]
 
-  override def rawValue(key: String): IO[Either[Throwable, Json]] = Either.fromOption(client.get[String](key).map(_.asJson), error("operation failed!")).pure[IO]
+  override def rawValue(key: String): IO[Either[Throwable, Json]] =
+    Either.fromOption(client.get[String](key).map(_.asJson), error("operation failed!")).pure[IO]
 }
 
 object RedisStore {
