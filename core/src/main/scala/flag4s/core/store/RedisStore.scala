@@ -7,7 +7,7 @@ import cats.syntax.applicative._
 import cats.syntax.either._
 import com.redis.RedisClient
 
-import flag4s.core.store.Store._
+import flag4s.core._
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._

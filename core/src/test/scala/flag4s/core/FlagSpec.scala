@@ -42,17 +42,14 @@ class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
       for {
         _ <- store.put(key, true)
         res <- enabled(fatalFlag(key))
-      } yield {
-        res.isRight shouldBe true
-        res.right.get shouldBe true
-      }
+      } yield res shouldBe true
     }
     "return false if types mismatch" in {
       val key = randomKey
-      for {
+      val res = for {
         _ <- store.put(key, "string")
-        res <- enabled(fatalFlag(key))
-      } yield res.isLeft shouldBe true
+        r <- enabled(fatalFlag(key))
+      } yield r shouldBe false
     }
     "execute function if flag is enabled" in {
       val key = randomKey
@@ -83,27 +80,21 @@ class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
       for {
         _ <- store.put(key, "string")
         res <- is(fatalFlag(key), "string")
-      } yield {
-        res.isRight shouldBe true
-        res.right.get shouldBe true
-      }
+      } yield res shouldBe true
     }
     "return false if value doesn't match" in {
       val key = randomKey
       for {
         _ <- store.put(key, "foo")
         res <- is(fatalFlag(key), "bar")
-      } yield {
-        res.isRight shouldBe true
-        res.right.get shouldBe false
-      }
+      } yield res shouldBe false
     }
     "return left if types mismatch in value check" in {
       val key = randomKey
       for {
         _ <- store.put(key, true)
         res <- is(fatalFlag(key), "string")
-      } yield res.isLeft shouldBe true
+      } yield res shouldBe false
     }
     "execute function if values match" in {
       val key = randomKey
@@ -155,6 +146,20 @@ class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
       for {
         _ <- store.put(key, true)
         res <- newFlag(key, true)
+      } yield res.isLeft shouldBe true
+    }
+    "withFlag should run the function if flag is on" in {
+      val key = randomKey
+      for {
+        _ <- store.put(key, true)
+        res <- withToggle(key)("flag is on!")
+      } yield res.isRight shouldBe true
+    }
+    "withFlag should not run the function if flag is off" in {
+      val key = randomKey
+      for {
+        _ <- store.put(key, false)
+        res <- withToggle(key)("flag is on!")
       } yield res.isLeft shouldBe true
     }
   }

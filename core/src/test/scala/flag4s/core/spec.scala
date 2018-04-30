@@ -4,14 +4,12 @@ import java.util.UUID
 
 import cats.effect.IO
 import cats.syntax.applicative._
-import cats.syntax.either._
 import org.http4s.{EntityDecoder, Response, Status}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers}
 
 import flag4s.core.store.{Store, StoredValue}
-import flag4s.core.store.Store.error
-import io.circe.{Decoder, Encoder, Json}
+import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
@@ -32,7 +30,6 @@ trait FeatureSpec
 }
 
 class InMemoryStore extends Store {
-  import Store._
   val map: collection.mutable.HashMap[String, String] = collection.mutable.HashMap[String, String]()
 
   override def put[T: Encoder](key: String, value: T): IO[Either[Throwable, T]] = {

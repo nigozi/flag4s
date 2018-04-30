@@ -94,7 +94,5 @@ class Http4sFlagApiSpec extends WordSpec with Http4sClientDsl[IO] with FeatureSp
     }
   }
 
-  private def decodeFlag[A: Decoder](s: String): A = decode[A](s).leftMap(e => new RuntimeException(e.getMessage)).toOption.get
-
   private def flagService(store: Store) = Http4sFlagApi.service(store)
 }

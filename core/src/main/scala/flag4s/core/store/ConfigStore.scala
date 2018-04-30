@@ -9,7 +9,7 @@ import cats.syntax.applicative._
 import cats.syntax.either._
 import pureconfig.loadConfig
 
-import flag4s.core.store.Store._
+import flag4s.core._
 import io.circe.{Encoder, Json}
 import io.circe.syntax._
 

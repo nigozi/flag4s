@@ -34,6 +34,4 @@ trait Store {
 
 object Store {
   implicit val flagEntityDecoder: EntityDecoder[IO, Flag] = jsonOf[IO, Flag]
-
-  def error(message: String): Throwable = new RuntimeException(message)
 }
