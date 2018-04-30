@@ -26,7 +26,8 @@ lazy val root = project
   .in(file("."))
   .aggregate(
     core,
-    http4s
+    http4s,
+    akka
   )
 
 lazy val core = project
@@ -62,4 +63,20 @@ lazy val http4s = project
       "org.http4s" %% "http4s-dsl" % http4sVersion,
       "org.http4s" %% "http4s-circe" % http4sVersion
     )
+  )
+
+lazy val akka = project
+  .in(file("akka-http-api"))
+  .dependsOn(core % "compile->compile;test->test")
+  .settings(
+    description := "akka http api for http4s",
+    name := "flag4s-api-akka-http",
+    libraryDependencies ++=
+      commonDependencies ++
+        testDependencies ++
+        Seq(
+          "com.typesafe.akka" %% "akka-http" % "10.1.1",
+          "de.heikoseeberger" %% "akka-http-circe" % "1.20.1",
+          "com.typesafe.akka" %% "akka-http-testkit" % "10.1.1" % Test,
+        )
   )

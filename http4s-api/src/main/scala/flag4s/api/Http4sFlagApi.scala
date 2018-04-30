@@ -10,7 +10,7 @@ import org.http4s.dsl.io._
 import flag4s.core.{flag, _}
 import flag4s.core.store.Store
 import flag4s.core.store.Store._
-import io.circe.{Encoder, _}
+import io.circe._
 import io.circe.Encoder._
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -53,20 +53,6 @@ object Http4sFlagApi {
           case Left(e) => BadRequest(errJson(e))
         }
     }
-
-  def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, A]] = {
-    val valid = flag(key).map {
-      case Right(f) => checkType(f, value).unsafeRunSync()
-      case _ => Right((): Unit)
-    }
-
-    IO.pure {
-      for {
-        _ <- valid.unsafeRunSync()
-        res <- store.put(key, value).unsafeRunSync()
-      } yield res
-    }
-  }
 
   private def errJson(e: Throwable): Json = e.getMessage.asJson
 }
