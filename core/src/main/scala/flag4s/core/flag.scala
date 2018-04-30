@@ -53,12 +53,6 @@ trait FlagOps {
       _ <- checkType(flag, value)
       res <- store.put(flag.key, value)
     } yield res
-
-  def checkType[A: Encoder](flag: Flag, value: A): IO[Either[Throwable, Unit]] = {
-    val org = flag.value.name
-    val des = value.asJson.name
-    IO.pure(if (org == des) Right((): Unit) else error(s"type mismatch! can't replace $org with $des").asLeft)
-  }
 }
 
 object FlagOps extends FlagOps
