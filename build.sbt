@@ -10,6 +10,9 @@ val catsVersion = "1.1.0"
 val circeVersion = "0.9.3"
 val http4sVersion = "0.18.9"
 
+val cross = Seq("2.11.12", "2.12.4")
+crossScalaVersions := cross
+
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
   "io.circe" %% "circe-core" % circeVersion,
@@ -34,6 +37,7 @@ lazy val core = project
   .settings(
     description := "flag4s core",
     name := "flag4s-core",
+    crossScalaVersions := cross,
     libraryDependencies ++=
       commonDependencies ++
         testDependencies ++
@@ -43,8 +47,7 @@ lazy val core = project
           "org.http4s" %% "http4s-dsl" % http4sVersion,
           "org.http4s" %% "http4s-circe" % http4sVersion,
           "com.github.pureconfig" %% "pureconfig" % "0.9.1",
-          "net.debasishg" %% "redisclient" % "3.5",
-          "com.github.sebruck" %% "scalatest-embedded-redis" % "0.3.0" % Test
+          "net.debasishg" %% "redisclient" % "3.5"
         )
   )
 
@@ -54,6 +57,7 @@ lazy val http4s = project
   .settings(
     description := "flag4s api for http4s",
     name := "flag4s-api-http4s",
+    crossScalaVersions := cross,
     libraryDependencies ++=
       commonDependencies ++
         testDependencies ++

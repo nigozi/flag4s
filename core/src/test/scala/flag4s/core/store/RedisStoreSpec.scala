@@ -1,30 +1,19 @@
 package flag4s.core.store
 
-import com.github.sebruck.EmbeddedRedis
-import org.scalatest.WordSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import com.redis.RedisClient
+import com.redis.serialization.{Format, Parse}
+import org.scalatest.WordSpec
+
 import flag4s.core.FeatureSpec
-import redis.embedded.RedisServer
 
 class RedisStoreSpec
-  extends WordSpec with FeatureSpec with EmbeddedRedis {
-  val port = 6378
-  val redisServer = new RedisServer(port)
-
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    redisServer.start()
-  }
-
-  override def afterAll(): Unit = {
-    super.afterAll()
-    redisServer.stop()
-  }
+  extends WordSpec with FeatureSpec {
 
   "store" should {
     "successfully store a key/value" in {
-      implicit val store = RedisStore("localhost", port)
+      implicit val s = store
       val key = randomKey
       for {
         res <- store.put(key, true)
@@ -32,7 +21,7 @@ class RedisStoreSpec
     }
 
     "successfully get a key's value" in {
-      implicit val store = RedisStore("localhost", port)
+      implicit val s = store
       val key = randomKey
       for {
         res <- store.put(key, "value")
@@ -43,7 +32,7 @@ class RedisStoreSpec
     }
 
     "successfully get list of key/values" in {
-      implicit val store = RedisStore("localhost", port)
+      implicit val s = store
       val key1 = randomKey
       val key2 = randomKey
       for {
@@ -56,4 +45,19 @@ class RedisStoreSpec
       }
     }
   }
+
+  def store: Store = new MockStore
+
+  class MockClient extends RedisClient {
+    override def get[A](key: Any)(implicit format: Format, parse: Parse[A]): Option[A] = Some("{\"value\": \"on\"}".asInstanceOf[A])
+
+    override def set(key: Any, value: Any)(implicit format: Format): Boolean = true
+
+    override def keys[A](pattern: Any = "*")(implicit format: Format, parse: Parse[A]): Option[List[Option[A]]] = Some(List(Some("key".asInstanceOf[A])))
+  }
+
+  class MockStore extends RedisStore("host", 6379) {
+    override def redisClient = new MockClient
+  }
+
 }

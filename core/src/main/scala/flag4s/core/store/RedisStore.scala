@@ -18,7 +18,7 @@ class RedisStore(
   port: Int)(implicit ec: ExecutionContext)
   extends Store {
 
-  private val client = new RedisClient(host, port)
+  val client = redisClient
 
   override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] =
     if (client.set(key, StoredValue(value.asJson).asJson))
@@ -42,6 +42,8 @@ class RedisStore(
       case _ => Left(error(s"failed to parse value of $key")).pure[IO]
     }
   }
+
+  def redisClient = new RedisClient(host, port)
 }
 
 object RedisStore {
