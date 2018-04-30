@@ -2,14 +2,13 @@ package flag4s.api
 
 import cats.effect._
 import cats.instances.either._
-import cats.syntax.applicative._
 import cats.syntax.either._
 import org.http4s.HttpService
 import org.http4s.circe._
 import org.http4s.dsl.io._
 
-import flag4s.core._
-import flag4s.core.store.{JsonFlag, Store}
+import flag4s.core.{flag, _}
+import flag4s.core.store.Store
 import flag4s.core.store.Store._
 import io.circe.{Encoder, _}
 import io.circe.Encoder._
@@ -29,7 +28,7 @@ object Http4sFlagApi {
       }
       case req@PUT -> Root / "flags" =>
         for {
-          fl <- req.as[JsonFlag]
+          fl <- req.as[Flag]
           res <- switchFlag(fl.key, fl.value)
         } yield res match {
           case Right(v) => Ok(v).unsafeRunSync()
@@ -37,13 +36,13 @@ object Http4sFlagApi {
         }
       case GET -> Root / "flags" / key =>
         flag(key).map {
-          case Right(v) => Ok(v.toJsonFlag.asJson).unsafeRunSync()
+          case Right(v) => Ok(v.asJson).unsafeRunSync()
           case Left(e) => NotFound(errJson(e)).unsafeRunSync()
         }
       case GET -> Root / "flags" =>
         (for {
           keys <- store.keys().unsafeRunSync()
-          flags <- keys.map(k => fatalFlag(k).toJsonFlag.asJson).asRight
+          flags <- keys.map(k => fatalFlag(k).asJson).asRight
         } yield flags.asJson) match {
           case Right(r) => Ok(r)
           case Left(e) => BadRequest(errJson(e))
@@ -56,14 +55,16 @@ object Http4sFlagApi {
     }
 
   def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, A]] = {
-    val valid = for {
-      flag <- flag(key)
-      valid <- flag.map(f => validateType(f, value).unsafeRunSync()).pure[IO]
-    } yield valid.toOption.getOrElse(true)
+    val valid = flag(key).map {
+      case Right(f) => checkType(f, value).unsafeRunSync()
+      case _ => Right((): Unit)
+    }
 
-    valid.flatMap {
-      case true => store.put(key, value)
-      case false => IO.pure(new RuntimeException("type mismatch!").asLeft)
+    IO.pure {
+      for {
+        _ <- valid.unsafeRunSync()
+        res <- store.put(key, value).unsafeRunSync()
+      } yield res
     }
   }
 

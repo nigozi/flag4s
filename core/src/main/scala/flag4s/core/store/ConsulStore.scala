@@ -3,15 +3,13 @@ package flag4s.core.store
 import scala.concurrent.ExecutionContext
 
 import cats.effect._
-import cats.syntax.either._
 import org.http4s.Uri
 import org.http4s.circe._
 import org.http4s.client.{blaze, Client}
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.dsl.io.{GET, _}
 
-import flag4s.core.FlagValue
-import io.circe.{Decoder, Encoder, Json}
+import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
@@ -21,24 +19,23 @@ class ConsulStore(
   port: Int,
   basePath: String = "",
   aclToken: Option[String] = None)(implicit ec: ExecutionContext) extends Http4sClientDsl[IO] with Store {
-  import Store._
 
-  val baseUri = s"http://$host:$port/v1/kv"
-  val base = if(basePath.isEmpty) baseUri else s"$baseUri/$basePath"
+  private val baseUri = s"http://$host:$port/v1/kv"
+  private val base = if (basePath.isEmpty) baseUri else s"$baseUri/$basePath"
 
   val client: Client[IO] = blaze.Http1Client[IO]().unsafeRunSync()
 
   override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] = {
-    val req = PUT(Uri.unsafeFromString(s"$base/$key")).withBody(FlagValue(value.asJson).asJson)
+    val req = PUT(Uri.unsafeFromString(s"$base/$key")).withBody(StoredValue(value.asJson).asJson)
     for {
       resp <- client.expect[String](req).attempt
     } yield resp.map(_ => value)
   }
 
-  def rawValue(key: String): IO[Either[Throwable, FlagValue]] =
+  override def rawValue(key: String): IO[Either[Throwable, Json]] =
     for {
       resp <- client.expect[Json](GET(Uri.unsafeFromString(s"$base/$key?raw=true"))).attempt
-    } yield resp.map(parseFlagValue)
+    } yield resp.flatMap(r => r.as[StoredValue]).map(_.value)
 
   override def keys(): IO[Either[Throwable, List[String]]] = {
     val req = GET(Uri.unsafeFromString(s"$base/?keys"))

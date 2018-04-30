@@ -36,7 +36,7 @@ class InMemoryStore extends Store {
   val map: collection.mutable.HashMap[String, String] = collection.mutable.HashMap[String, String]()
 
   override def put[T: Encoder](key: String, value: T): IO[Either[Throwable, T]] = {
-    map.put(key, StoredValue(value).asJson.toString())
+    map.put(key, StoredValue(value.asJson).asJson.toString())
     Right(value).pure[IO]
   }
 
@@ -48,6 +48,12 @@ class InMemoryStore extends Store {
       .getOrElse(Left(error(s"failed to delete flag $key")))
       .pure[IO]
 
-  override def rawValue(key: String): IO[Either[Throwable, FlagValue]] =
-    map.get(key).map(v => parse(v).map(parseFlagValue)).getOrElse(Left(error(s"flag $key not found"))).pure[IO]
+  override def rawValue(key: String): IO[Either[Throwable, Json]] = {
+    def get: Option[String] = map.get(key)
+
+    get match {
+      case Some(v) => decode[StoredValue](v).map(_.value).pure[IO]
+      case _ => Left(error(s"failed to parse value of $key")).pure[IO]
+    }
+  }
 }

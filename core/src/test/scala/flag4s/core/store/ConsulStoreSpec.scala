@@ -53,7 +53,7 @@ class ConsulStoreSpec extends WordSpec with FeatureSpec {
 
 class MockStore extends ConsulStore("host", 8500) {
   val service = HttpService[IO] {
-    case r if r.method == GET && r.uri.query.toString().contains("raw=true") => Response[IO](Ok).withBody(StoredValue("value").asJson)
+    case r if r.method == GET && r.uri.query.toString().contains("raw=true") => Response[IO](Ok).withBody(StoredValue("value".asJson).asJson)
     case r if r.method == GET && r.uri.query.toString().contains("keys") => Response[IO](Ok).withBody("[\"key1\", \"key2\"]".asJson)
     case r if r.method == PUT => Response[IO](Ok).withBodyStream(r.body).pure[IO]
     case r if r.method == DELETE => Response[IO](Ok).withBodyStream(r.body).pure[IO]

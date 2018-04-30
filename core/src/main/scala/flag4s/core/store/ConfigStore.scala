@@ -9,9 +9,8 @@ import cats.syntax.applicative._
 import cats.syntax.either._
 import pureconfig.loadConfig
 
-import flag4s.core.FlagValue
 import flag4s.core.store.Store._
-import io.circe.Encoder
+import io.circe.{Encoder, Json}
 import io.circe.syntax._
 
 case class Config(features: Map[String, String])
@@ -21,7 +20,7 @@ class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
     loadConfig[Config](new File(path).toPath).leftMap(e => error(e.head.description))
 
   override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] =
-    Left(error("value modification is not supported in config store")).pure[IO]
+    IO.pure(error("value modification is not supported in config store").asLeft)
 
   override def keys(): IO[Either[Throwable, List[String]]] =
     config
@@ -29,11 +28,11 @@ class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
       .pure[IO]
 
   override def remove(key: String): IO[Either[Throwable, Unit]] =
-    Left(error("removing a key is not supported in config store")).pure[IO]
+    Left(error("removing a flag is not supported in config store")).pure[IO]
 
-  override def rawValue(key: String): IO[Either[Throwable, FlagValue]] =
+  override def rawValue(key: String): IO[Either[Throwable, Json]] =
     config
-      .flatMap(c => Either.fromOption(c.features.get(key).map(v => parseFlagValue(v.asJson)), error(s"key $key not found")))
+      .flatMap(c => Either.fromOption(c.features.get(key).map(v => v.asJson), error(s"key $key not found")))
       .pure[IO]
 }
 

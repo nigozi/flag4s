@@ -10,23 +10,22 @@ import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 
-case class StoredValue[A](value: A)
-
-case class JsonFlag(key: String, value: Json)
+case class StoredFlag(key: String, value: StoredValue)
+case class StoredValue(value: Json)
 
 trait Store {
   def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]]
 
   def get[A: Decoder](key: String): IO[Either[Throwable, A]] = {
-    def convertTo(v: FlagValue): Either[Throwable, A] = decode[A](v.value.toString())
+    def fromJson(v: Json): Either[Throwable, A] = decode[A](v.toString())
 
     for {
       rv <- rawValue(key)
-      pv <- rv.flatMap(convertTo).pure[IO]
+      pv <- rv.flatMap(fromJson).pure[IO]
     } yield pv
   }
 
-  def rawValue(key: String): IO[Either[Throwable, FlagValue]]
+  def rawValue(key: String): IO[Either[Throwable, Json]]
 
   def keys(): IO[Either[Throwable, List[String]]]
 
@@ -34,11 +33,7 @@ trait Store {
 }
 
 object Store {
+  implicit val flagEntityDecoder: EntityDecoder[IO, Flag] = jsonOf[IO, Flag]
+
   def error(message: String): Throwable = new RuntimeException(message)
-
-  implicit val flagEntityDecoder: EntityDecoder[IO, JsonFlag] = jsonOf[IO, JsonFlag]
-
-  def parseFlagValue(v: Json): FlagValue = {
-    v.hcursor.downField("value").focus.map(FlagValue).getOrElse(FlagValue(Json.Null))
-  }
 }

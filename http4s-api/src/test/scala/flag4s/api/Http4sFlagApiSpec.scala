@@ -10,7 +10,7 @@ import org.http4s.dsl.io._
 import org.scalatest.WordSpec
 
 import flag4s.core._
-import flag4s.core.store.{JsonFlag, Store}
+import flag4s.core.store.Store
 import io.circe.{Decoder, Json}
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -51,18 +51,18 @@ class Http4sFlagApiSpec extends WordSpec with Http4sClientDsl[IO] with FeatureSp
       s.put(key2, false).unsafeRunSync()
       val res = flagService(s).run(req).value.map(_.get)
       val expected = List(
-        JsonFlag(key1, Json.fromBoolean(true)),
-        JsonFlag(key2, Json.fromBoolean(false))
+        Flag(key1, Json.fromBoolean(true)),
+        Flag(key2, Json.fromBoolean(false))
       )
 
       statusCheck(res, Ok) shouldBe true
 
       val body = res.unsafeRunSync().as[String].unsafeRunSync()
-      decode[List[JsonFlag]](body).toOption.get should contain allElementsOf expected
+      decode[List[Flag]](body).toOption.get should contain allElementsOf expected
     }
     "save a new flag" in {
       val key = randomKey
-      val req = PUT(Uri.unsafeFromString("/flags")).withBody(JsonFlag(key, true.asJson).asJson).unsafeRunSync()
+      val req = PUT(Uri.unsafeFromString("/flags")).withBody(Flag(key, true.asJson).asJson).unsafeRunSync()
       val res = service.run(req).value.map(_.get)
 
       statusCheck(res, Ok) shouldBe true
@@ -83,7 +83,7 @@ class Http4sFlagApiSpec extends WordSpec with Http4sClientDsl[IO] with FeatureSp
       val key = randomKey
       store.put(key, true).unsafeRunSync()
 
-      val req = PUT(Uri.unsafeFromString("/flags")).withBody(JsonFlag(key, false.asJson).asJson).unsafeRunSync()
+      val req = PUT(Uri.unsafeFromString("/flags")).withBody(Flag(key, false.asJson).asJson).unsafeRunSync()
       val res = service.run(req).value.map(_.get)
 
       statusCheck(res, Ok) shouldBe true
