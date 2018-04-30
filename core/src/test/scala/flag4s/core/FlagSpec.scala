@@ -6,6 +6,8 @@ import cats.effect.IO
 import cats.syntax.applicative._
 import org.scalatest.WordSpec
 
+import io.circe.syntax._
+
 class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
   implicit val store: InMemoryStore = new InMemoryStore
 
@@ -17,7 +19,7 @@ class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
         res <- flag(key)
       } yield {
         res.isRight shouldBe true
-        res.right.get.v shouldBe BooleanValue
+        res.right.get.value shouldBe true.asJson
       }
     }
     "return proper response if flag doesn't exist" in {

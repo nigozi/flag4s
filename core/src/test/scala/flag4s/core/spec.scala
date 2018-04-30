@@ -25,23 +25,20 @@ trait FeatureSpec
 
   def statusCheck(actual: IO[Response[IO]], expected: Status): Boolean = actual.unsafeRunSync().status == expected
 
-  def bodyCheck[A](actual: IO[Response[IO]], expected: A)(implicit ev: EntityDecoder[IO, A]): Boolean =
-    actual.unsafeRunSync().as[A].unsafeRunSync  == expected
+  def bodyCheck[A](actual: IO[Response[IO]], expected: A)(implicit ev: EntityDecoder[IO, A]): Boolean = {
+    val act = actual.unsafeRunSync().as[A].unsafeRunSync
+    act == expected
+  }
 }
 
 class InMemoryStore extends Store {
+  import Store._
   val map: collection.mutable.HashMap[String, String] = collection.mutable.HashMap[String, String]()
 
   override def put[T: Encoder](key: String, value: T): IO[Either[Throwable, T]] = {
     map.put(key, StoredValue(value).asJson.toString())
     Right(value).pure[IO]
   }
-
-  def get[T: Decoder](key: String): IO[Either[Throwable, T]] =
-    Either.fromOption(map.get(key), error(s"flag $key not found"))
-      .flatMap(a => decode[StoredValue[T]](a).leftMap(_.getCause))
-      .map(_.value)
-      .pure[IO]
 
   def keys(): IO[Either[Throwable, List[String]]] =
     Right(map.keySet.toList).pure[IO]
@@ -51,6 +48,6 @@ class InMemoryStore extends Store {
       .getOrElse(Left(error(s"failed to delete flag $key")))
       .pure[IO]
 
-  override def rawValue(key: String): IO[Either[Throwable, Json]] =
-    map.get(key).map(v => parse(v)).getOrElse(Left(error(s"flag $key not found"))).pure[IO]
+  override def rawValue(key: String): IO[Either[Throwable, FlagValue]] =
+    map.get(key).map(v => parse(v).map(parseFlagValue)).getOrElse(Left(error(s"flag $key not found"))).pure[IO]
 }

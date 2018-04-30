@@ -10,7 +10,7 @@ import org.http4s.dsl.io._
 import org.scalatest.WordSpec
 
 import flag4s.core._
-import flag4s.core.store.Store
+import flag4s.core.store.{JsonFlag, Store}
 import io.circe.{Decoder, Json}
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -18,7 +18,7 @@ import io.circe.syntax._
 
 class Http4sFlagApiSpec extends WordSpec with Http4sClientDsl[IO] with FeatureSpec {
   implicit val store: InMemoryStore = new InMemoryStore
-  implicit val decoder: EntityDecoder[IO, JsonFlag] = jsonOf[IO, JsonFlag]
+  implicit val decoder: EntityDecoder[IO, Flag] = jsonOf[IO, Flag]
   val service: HttpService[IO] = flagService(store)
 
   "api" should {

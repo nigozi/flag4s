@@ -2,13 +2,14 @@ package flag4s.api
 
 import cats.effect._
 import cats.instances.either._
+import cats.syntax.applicative._
 import cats.syntax.either._
-import org.http4s.{EntityDecoder, HttpService, Response}
+import org.http4s.HttpService
 import org.http4s.circe._
 import org.http4s.dsl.io._
 
 import flag4s.core._
-import flag4s.core.store.Store
+import flag4s.core.store.{JsonFlag, Store}
 import flag4s.core.store.Store._
 import io.circe.{Encoder, _}
 import io.circe.Encoder._
@@ -16,25 +17,33 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 
 object Http4sFlagApi {
-  implicit val decoder: EntityDecoder[IO, JsonFlag] = jsonOf[IO, JsonFlag]
-
   def service(implicit store: Store): HttpService[IO] =
     HttpService[IO] {
-      case POST -> Root / "flags" / key / "enable" => switchFlag(key, true)
-      case POST -> Root / "flags" / key / "disable" => switchFlag(key, false)
+      case POST -> Root / "flags" / key / "enable" => switchFlag(key, true).map {
+        case Right(v) => Ok(v.asJson).unsafeRunSync()
+        case Left(e) => BadRequest(errJson(e)).unsafeRunSync()
+      }
+      case POST -> Root / "flags" / key / "disable" => switchFlag(key, false).map {
+        case Right(v) => Ok(v.asJson).unsafeRunSync()
+        case Left(e) => BadRequest(errJson(e)).unsafeRunSync()
+      }
       case req@PUT -> Root / "flags" =>
         for {
-          f <- req.decode[JsonFlag](fl => switchFlag(fl.key, fl.value))
-        } yield f
+          fl <- req.as[JsonFlag]
+          res <- switchFlag(fl.key, fl.value)
+        } yield res match {
+          case Right(v) => Ok(v).unsafeRunSync()
+          case Left(e) => NotFound(errJson(e)).unsafeRunSync()
+        }
       case GET -> Root / "flags" / key =>
-        jsonFlag(key).map {
-          case Right(v) => Ok(v.asJson).unsafeRunSync()
+        flag(key).map {
+          case Right(v) => Ok(v.toJsonFlag.asJson).unsafeRunSync()
           case Left(e) => NotFound(errJson(e)).unsafeRunSync()
         }
       case GET -> Root / "flags" =>
         (for {
           keys <- store.keys().unsafeRunSync()
-          flags <- keys.map(fatalJsonFlag).asRight
+          flags <- keys.map(k => fatalFlag(k).toJsonFlag.asJson).asRight
         } yield flags.asJson) match {
           case Right(r) => Ok(r)
           case Left(e) => BadRequest(errJson(e))
@@ -46,13 +55,15 @@ object Http4sFlagApi {
         }
     }
 
-  def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Response[IO]] = {
-    val valid = flag(key).unsafeRunSync().map(f => validateType(f, value)).toOption.getOrElse(true)
-    val res = if (valid) store.put(key, value).unsafeRunSync() else new RuntimeException("type mismatch!").asLeft
+  def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, A]] = {
+    val valid = for {
+      flag <- flag(key)
+      valid <- flag.map(f => validateType(f, value).unsafeRunSync()).pure[IO]
+    } yield valid.toOption.getOrElse(true)
 
-    res match {
-      case Right(r) => Ok(r.asJson)
-      case Left(e) => BadRequest(errJson(e))
+    valid.flatMap {
+      case true => store.put(key, value)
+      case false => IO.pure(new RuntimeException("type mismatch!").asLeft)
     }
   }
 
