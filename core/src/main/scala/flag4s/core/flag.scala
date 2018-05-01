@@ -20,7 +20,7 @@ trait FlagOps {
 
   def fatalFlag(key: String)(implicit store: Store): Flag = flag(key).unsafeRunSync().valueOr(e => sys.error(e.getMessage))
 
-  def withToggle[A: Encoder, B](key: String, value: A = false)(f: => B)(implicit store: Store): IO[Either[Throwable, B]] =
+  def withFlag[A: Encoder, B](key: String, value: A = false)(f: => B)(implicit store: Store): IO[Either[Throwable, B]] =
     for {
       flag <- flag(key)
     } yield flag match {
