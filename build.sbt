@@ -4,6 +4,9 @@ name := "flag4s"
 
 scalacOptions in ThisBuild += "-Ypartial-unification"
 
+lazy val currentVersion = "0.1.1-SNAPSHOT"
+
+version := currentVersion
 
 licenses := List("MIT" -> url("http://opensource.org/licenses/MIT"))
 homepage := Some(url("https://github.com/nigozi/flag4s"))
@@ -12,7 +15,7 @@ developers := List(Developer("nigozi", "Nima Goodarzi", "nima@nigo.io", url("htt
 
 lazy val commonSettings = Seq (
   organization := "io.nigo",
-  version := "0.1.0-SNAPSHOT",
+  version := currentVersion,
   publishTo := sonatypePublishTo.value,
   credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
   publishArtifact in Test := false,
