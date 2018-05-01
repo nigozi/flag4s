@@ -92,31 +92,31 @@ Http().bindAndHandle(AkkaFlagApi.route(), "localhost", 8080)
 
 **create/update a flag**
 ```
-http PUT localhost:8888/flags key=featureA value="on"
-http PUT localhost:8888/flags key=featureB value:=true
+http PUT localhost:8080/flags key=featureA value="on"
+http PUT localhost:8080/flags key=featureB value:=true
 ```
 
 **get a flag**
 ```
-http localhost:8888/flags/featureA
+http localhost:8080/flags/featureA
 ```
 
 **get all flags**
 ```
-http localhost:8888/flags
+http localhost:8080/flags
 ```
 
 **enable a boolean flag**
 ```
-http POST localhost:8888/flags/featureB/enable
+http POST localhost:8080/flags/featureB/enable
 ```
 
 **disable a boolean flag**
 ```
-http POST localhost:8888/flags/featureB/disable
+http POST localhost:8080/flags/featureB/disable
 ```
 
 **delete a flag**
 ```
-http DELETE localhost:8888/flags/featureA
+http DELETE localhost:8080/flags/featureA
 ```
