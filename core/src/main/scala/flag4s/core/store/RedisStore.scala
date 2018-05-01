@@ -15,8 +15,12 @@ import io.circe.parser._
 
 class RedisStore(
   host: String,
-  port: Int)(implicit ec: ExecutionContext)
+  port: Int,
+  database: Int = 0,
+  secret: Option[Any] = None)(implicit ec: ExecutionContext)
   extends Store {
+
+  def redisClient = new RedisClient(host, port, database, secret)
 
   val client = redisClient
 
@@ -42,8 +46,6 @@ class RedisStore(
       case _ => Left(error(s"failed to parse value of $key")).pure[IO]
     }
   }
-
-  def redisClient = new RedisClient(host, port)
 }
 
 object RedisStore {
