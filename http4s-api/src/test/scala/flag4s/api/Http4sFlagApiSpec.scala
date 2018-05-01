@@ -1,7 +1,6 @@
 package flag4s.api
 
 import cats.effect.IO
-import cats.implicits._
 import cats.instances.either._
 import org.http4s.{EntityDecoder, HttpService, Uri}
 import org.http4s.circe._
@@ -11,7 +10,7 @@ import org.scalatest.WordSpec
 
 import flag4s.core._
 import flag4s.core.store.Store
-import io.circe.{Decoder, Json}
+import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._

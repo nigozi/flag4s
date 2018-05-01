@@ -29,6 +29,22 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
           }
         }
     } ~
+      path(Segment / "enable") { key =>
+        post {
+          switchFlag(key, true).unsafeRunSync() match {
+            case Right(v) => complete(v.asJson)
+            case Left(e) => complete(400, e.getMessage)
+          }
+        }
+      } ~
+      path(Segment / "disable") { key =>
+        post {
+          switchFlag(key, false).unsafeRunSync() match {
+            case Right(v) => complete(v.asJson)
+            case Left(e) => complete(400, e.getMessage)
+          }
+        }
+      } ~
       pathEnd {
         get {
           (for {
