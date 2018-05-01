@@ -94,5 +94,5 @@ class Http4sFlagApiSpec extends WordSpec with Http4sClientDsl[IO] with FeatureSp
     }
   }
 
-  private def flagService(store: Store) = Http4sFlagApi.service(store)
+  private def flagService(store: Store) = Http4sFlagApi.service()(store)
 }

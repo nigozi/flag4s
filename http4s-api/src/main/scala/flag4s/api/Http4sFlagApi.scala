@@ -16,17 +16,17 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 
 object Http4sFlagApi {
-  def service(implicit store: Store): HttpService[IO] =
+  def service(`basePath`: String = "flags")(implicit store: Store): HttpService[IO] =
     HttpService[IO] {
-      case POST -> Root / "flags" / key / "enable" => switchFlag(key, true).map {
+      case POST -> Root / `basePath` / key / "enable" => switchFlag(key, true).map {
         case Right(v) => Ok(v.asJson).unsafeRunSync()
         case Left(e) => BadRequest(errJson(e)).unsafeRunSync()
       }
-      case POST -> Root / "flags" / key / "disable" => switchFlag(key, false).map {
+      case POST -> Root / `basePath` / key / "disable" => switchFlag(key, false).map {
         case Right(v) => Ok(v.asJson).unsafeRunSync()
         case Left(e) => BadRequest(errJson(e)).unsafeRunSync()
       }
-      case req@PUT -> Root / "flags" =>
+      case req@PUT -> Root / `basePath` =>
         for {
           fl <- req.as[Flag]
           res <- switchFlag(fl.key, fl.value)
@@ -34,12 +34,12 @@ object Http4sFlagApi {
           case Right(v) => Ok(v).unsafeRunSync()
           case Left(e) => NotFound(errJson(e)).unsafeRunSync()
         }
-      case GET -> Root / "flags" / key =>
+      case GET -> Root / `basePath` / key =>
         flag(key).map {
           case Right(v) => Ok(v.asJson).unsafeRunSync()
           case Left(e) => NotFound(errJson(e)).unsafeRunSync()
         }
-      case GET -> Root / "flags" =>
+      case GET -> Root / `basePath` =>
         (for {
           keys <- store.keys().unsafeRunSync()
           flags <- keys.map(k => fatalFlag(k).asJson).asRight
@@ -47,7 +47,7 @@ object Http4sFlagApi {
           case Right(r) => Ok(r)
           case Left(e) => BadRequest(errJson(e))
         }
-      case DELETE -> Root / "flags" / key =>
+      case DELETE -> Root / `basePath` / key =>
         store.remove(key).unsafeRunSync() match {
           case Right(_) => Ok()
           case Left(e) => BadRequest(errJson(e))
