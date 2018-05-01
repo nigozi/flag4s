@@ -49,6 +49,8 @@ class RedisStoreSpec
   def store: Store = new MockStore
 
   class MockClient extends RedisClient {
+    override def initialize : Boolean = true
+
     override def get[A](key: Any)(implicit format: Format, parse: Parse[A]): Option[A] = Some("{\"value\": \"on\"}".asInstanceOf[A])
 
     override def set(key: Any, value: Any)(implicit format: Format): Boolean = true
