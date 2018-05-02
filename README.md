@@ -44,15 +44,15 @@ flag("featureA") // returns the flag as type of IO[Either[Throwable, Flag]]
 
 fatalFlag("featureA") // returns the flag or throws exception if flag doesn't exist
 
-withFlag("featureA") { // executes the function if the boolean flag is on
+withFlag("featureA", true) { // executes the function if the boolean flag is on
   // new feature ...
 }
 
-withFlag("featureA", "enabled") { // executes the function if the flag's value is "enabled"
+withFlag("featureB", "enabled") { // executes the function if the flag's value is "enabled"
   // new feature ...
 }
 
-newFlag("featureB", true) // creates a new flag with value true
+newFlag("featureC", true) // creates a new flag with value true
 
 enabled(flag) // checks if the boolean flag is on
 

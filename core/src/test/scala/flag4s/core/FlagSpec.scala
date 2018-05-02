@@ -152,14 +152,14 @@ class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
       val key = randomKey
       for {
         _ <- store.put(key, true)
-        res <- withFlag(key)("flag is on!")
+        res <- withFlag(key, true)("flag is on!")
       } yield res.isRight shouldBe true
     }
     "withFlag should not run the function if flag is off" in {
       val key = randomKey
       for {
         _ <- store.put(key, false)
-        res <- withFlag(key)("flag is on!")
+        res <- withFlag(key, false)("flag is on!")
       } yield res.isLeft shouldBe true
     }
   }
