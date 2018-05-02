@@ -1,13 +1,20 @@
 # flag4s: A simple feature flag library for Scala
-flag4s is a feature flag library which provides apis for managing the feature flags and switching them at runtime!
+flag4s helps you manage feature flags in your application via scala functions and http apis.
+
 flag4s consists of the following modules:
-* flag4s-core: core libraries and scala apis for managing the flags.
+* flag4s-core: core libraries, key/val stores and scala functions.
 * flag4s-api-http4s: http endpoints configuration for http4s.
 * flag4s-api-akka-http: http endpoints configuration for akka-http.
 
+# Dependencies
+flag4s uses IO type from cats-effect for all operations and all return types are IO.
+```
+libraryDependencies += "org.typelevel" %% "cats-effect" % "version"
+```
+ 
 # Usage
-## Core
 
+## Core
 ```
 libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.1"
 ```
@@ -22,66 +29,70 @@ implicit val store = ConsulStore("localhost", 8500)
 ```
 
 * you can choose one of the existing stores or create your own by implementing the Store trait.
-* ConfigStore is not recommended as it doesn't support value modification.
+* ConfigStore is not recommended as it does not support value modification.
 
 ### Use core functions to manage the flags:
+
 **Core Functions**
+All return types are IO, execute or compose them yourself.
+ 
 ```
 import flag4s.core._
-```
 
-```
-flag("featureA").unsafeRunSync() // get an existing flag as IO[Either[Throwable, Flag]]
+flag("featureA") // returns the flag in type of IO[Either[Throwable, Flag]]
 
-fatalFlag("featureA").unsafeRunSync() // get an existing flag and throw exception if flag doesn't exist
+fatalFlag("featureA") // returns the flag or throws exception if flag doesn't exist
 
-withFlag("featureA") { // execute the given function if the flag is on
+withFlag("featureA") { // executes the given function if boolean flag is on
   // new feature ...
-}.unsafeRunSync()
+}
 
-withFlag("featureA", "enabled") { // execute if the flag is set to "enabled"
+withFlag("featureA", "enabled") { // executes the given function if the flag is set to the given value
   // new feature ...
-}.unsafeRunSync()
+}
 
-newFlag("featureB", true).unsafeRunSync() // create a new flag with true as value
+newFlag("featureB", true) // creates a new flag with the given value
 
-enabled(flag) // check if the boolean flag is on
+enabled(flag) // checks if the boolean flag is on
 
-is(flag, "on") // check if non-boolean flag is set to the given value
+is(flag, "on") // checks if the non-boolean flag is set to the given value
 
-ifEnabled(flag) { // execute if the boolean flag is on
+ifEnabled(flag) { // executes the given function if the boolean flag is on
     // feature
 }
 
-ifIs(flag, "on") { // execute if the non-boolean flag is set to the given value
+ifIs(flag, "on") { // executes the given function if the non-boolean flag is set to the given value
     // feature
 }
 
-get[Double](flag) // return the flag's value as Double
+get[Double](flag) // returns the flag's value as the given type
 
-set(flag, "off") // set the flag's value to "off"
+set(flag, "off") // sets the flag to the given type
 ```
 
 **Syntax**
+
+There are also some syntax sugars for convenience: 
 ```
+import flag4s.core._
 import flag4s.syntax._
-```
-```
-fatalFlag("featureA").enabled.unsafeRunSync()
 
-fatalFlag("featureA").is("on").unsafeRunSync()
+val flag = fatalFlag("featureA") 
+flag.enabled
 
-fatalFlag("featureA").ifEnabled {
+flag.is("on")
+
+flag.ifEnabled {
     // feature ...
-}.unsafeRunSync()
+}
 
-fatalFlag("featureA").ifIs("on") {
+flag.ifIs("on") {
     // feature ...
-}.unsafeRunSync()
+}
 
-fatalFlag("featureA").get[Double]
+flag.get[Double]
 
-fatalFlag("featureA").set("off").unsafeRunSync()
+flag.set("off")
 ```
 
 ## Http Api

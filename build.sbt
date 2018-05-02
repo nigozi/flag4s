@@ -1,9 +1,9 @@
 import sbt.url
 import ReleaseTransformations._
 
-scalaVersion := "2.12.6"
-
 name := "flag4s"
+
+scalaVersion := "2.12.6"
 
 scalacOptions in ThisBuild += "-Ypartial-unification"
 
@@ -41,10 +41,12 @@ lazy val releaseSettings = Seq (
 )
 
 val catsVersion = "1.1.0"
+val catsEffectVersion = "1.0.0-RC"
 val circeVersion = "0.9.3"
 val http4sVersion = "0.18.9"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
+  "org.typelevel" %% "cats-effect" % catsEffectVersion,
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
