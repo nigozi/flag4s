@@ -40,35 +40,35 @@ All return types are IO, execute or compose them yourself.
 ```
 import flag4s.core._
 
-flag("featureA") // returns the flag in type of IO[Either[Throwable, Flag]]
+flag("featureA") // returns the flag as type of IO[Either[Throwable, Flag]]
 
 fatalFlag("featureA") // returns the flag or throws exception if flag doesn't exist
 
-withFlag("featureA") { // executes the given function if the boolean flag is on
+withFlag("featureA") { // executes the function if the boolean flag is on
   // new feature ...
 }
 
-withFlag("featureA", "enabled") { // executes the given function if the flag is set to the given value
+withFlag("featureA", "enabled") { // executes the function if the flag's value is "enabled"
   // new feature ...
 }
 
-newFlag("featureB", true) // creates a new flag with the given value
+newFlag("featureB", true) // creates a new flag with value true
 
 enabled(flag) // checks if the boolean flag is on
 
-is(flag, "on") // checks if the non-boolean flag is set to the given value
+is(flag, "on") // checks if the non-boolean flag's value is "on"
 
 ifEnabled(flag) { // executes the given function if the boolean flag is on
     // feature
 }
 
-ifIs(flag, "on") { // executes the given function if the non-boolean flag is set to the given value
+ifIs(flag, "enabled") { // executes the function if the non-boolean flag's value is "enabled" 
     // feature
 }
 
-get[Double](flag) // returns the flag's value as the given type
+get[Double](flag) // returns the flag's value as Double
 
-set(flag, "off") // sets the flag to the given type
+set(flag, "off") // sets the flag's value to "off"
 ```
 
 **Syntax**
