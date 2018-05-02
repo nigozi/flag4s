@@ -29,13 +29,21 @@ implicit val store = ConsulStore("localhost", 8500)
 ```
 
 * you can choose one of the existing stores or create your own by implementing the Store trait.
-* ConfigStore is not recommended as it does not support value modification.
+* ConfigStore is not recommended as it does not support value modification. Also it only supports String type, means that all the value checks must be String.
+To use the ConfigStore, put your feature flags in a .conf file in the following format:
+```
+features {
+  featureA: true
+  featureB: "on"
+  ...  
+} 
+```
 
 ### Use core functions to manage the flags:
 
 **Core Functions**
 
-All return types are IO, execute or compose them yourself.
+all return types are IO, execute or compose them yourself.
  
 ```
 import flag4s.core._
@@ -73,7 +81,7 @@ set(flag, "off") // sets the flag's value to "off"
 
 **Syntax**
 
-There are also some syntax sugars for convenience: 
+there are also some syntax sugars for convenience: 
 ```
 import flag4s.core._
 import flag4s.syntax._
