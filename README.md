@@ -16,7 +16,7 @@ libraryDependencies += "org.typelevel" %% "cats-effect" % "version"
 
 ## Core
 ```
-libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.1"
+libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.2"
 ```
 
 ### Choose your key/val store:
@@ -99,7 +99,7 @@ flag.set("off")
 ## Http Api
 **http4s**
 ```
-libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.1"
+libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.2"
 ```
 ```
 import flag4s.api.Http4sFlagApi
@@ -118,7 +118,7 @@ for {
 
 **akka-http**
 ```
-libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.1"
+libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.2"
 ```
 ```
 import flag4s.api.AkkaFlagApi
