@@ -1,17 +1,16 @@
 # flag4s: A simple feature flag library for Scala
 flag4s is a feature flag library which provides apis for managing the feature flags and switching them at runtime!
 flag4s consists of the following modules:
-```
-libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.1"
-libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.1"
-libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.1"
-```
 * flag4s-core: core libraries and scala apis for managing the flags.
 * flag4s-api-http4s: http endpoints configuration for http4s.
 * flag4s-api-akka-http: http endpoints configuration for akka-http.
 
 # Usage
 ## Core
+
+```
+libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.1"
+```
 
 ### Choose your key/val store:
 ```
@@ -88,6 +87,9 @@ fatalFlag("featureA").set("off").unsafeRunSync()
 ## Http Api
 **http4s**
 ```
+libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.1"
+```
+```
 import flag4s.api.Http4sFlagApi
 
 implicit val store = RedisStore("localhost", 6379)
@@ -103,6 +105,9 @@ for {
 ```
 
 **akka-http**
+```
+libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.1"
+```
 ```
 import flag4s.api.AkkaFlagApi
 
