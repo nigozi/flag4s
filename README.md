@@ -34,6 +34,7 @@ implicit val store = ConsulStore("localhost", 8500)
 ### Use core functions to manage the flags:
 
 **Core Functions**
+
 All return types are IO, execute or compose them yourself.
  
 ```
@@ -43,7 +44,7 @@ flag("featureA") // returns the flag in type of IO[Either[Throwable, Flag]]
 
 fatalFlag("featureA") // returns the flag or throws exception if flag doesn't exist
 
-withFlag("featureA") { // executes the given function if boolean flag is on
+withFlag("featureA") { // executes the given function if the boolean flag is on
   // new feature ...
 }
 
