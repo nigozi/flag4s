@@ -1,68 +1,91 @@
 # flag4s: A simple feature flag library for Scala
 flag4s is a feature flag library which provides apis for managing the feature flags and switching them at runtime!
 flag4s consists of the following modules:
-* flag4s-core: provides default key/val stores and language apis for managing the flags.
-* flag4s-api-http4s: provides a http4s service for flag management. 
-* flag4s-api-akka-http: provides a akka-http route for flag management.
+```
+libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.1"
+libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.1"
+libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.1"
+```
+* flag4s-core: core libraries and scala apis for managing the flags.
+* flag4s-api-http4s: http endpoints configuration for http4s.
+* flag4s-api-akka-http: http endpoints configuration for akka-http.
 
 # Usage
-You first need to choose the key/val store:
+## Core
+
+### Choose your key/val store:
 ```
 import flag4s.core.store._
 
 implicit val store = ConsulStore("localhost", 8500)
 // implicit val store = RedisStore("localhost", 6379)
+// implicit val store = ConfigStore("path-to-config-file")
 ```
 
-## Scala Api
-import core functions and use them to manage the flags:
-```
-import flag4s.core._
+* you can choose one of the existing stores or create your own by implementing the Store trait.
+* ConfigStore is not recommended as it doesn't support value modification.
 
-// execute if flag is set to true
-withFlag("featureA") {
-  // new feature ...
-}
-.unsafeRunSync()
-
-// execute if flag is set to "on"
-withFlag("featureA", "on") {
-  // new feature ...
-}
-.unsafeRunSync()
-
-// create a new flag
-newFlag("featureB", true).unsafeRunSync()
-```
-
-or use the syntax:
+### Use core functions to manage the flags:
+**Core Functions**
 ```
 import flag4s.core._
+```
+
+```
+flag("featureA").unsafeRunSync() // get an existing flag as IO[Either[Throwable, Flag]]
+
+fatalFlag("featureA").unsafeRunSync() // get an existing flag and throw exception if flag doesn't exist
+
+withFlag("featureA") { // execute the given function if the flag is on
+  // new feature ...
+}.unsafeRunSync()
+
+withFlag("featureA", "enabled") { // execute if the flag is set to "enabled"
+  // new feature ...
+}.unsafeRunSync()
+
+newFlag("featureB", true).unsafeRunSync() // create a new flag with true as value
+
+enabled(flag) // check if the boolean flag is on
+
+is(flag, "on") // check if non-boolean flag is set to the given value
+
+ifEnabled(flag) { // execute if the boolean flag is on
+    // feature
+}
+
+ifIs(flag, "on") { // execute if the non-boolean flag is set to the given value
+    // feature
+}
+
+get[Double](flag) // return the flag's value as Double
+
+set(flag, "off") // set the flag's value to "off"
+```
+
+**Syntax**
+```
 import flag4s.syntax._
-
-// check if flag is set to true
+```
+```
 fatalFlag("featureA").enabled.unsafeRunSync()
 
-// check if fag is set to the given value
 fatalFlag("featureA").is("on").unsafeRunSync()
 
-// execute if flag is set to true
 fatalFlag("featureA").ifEnabled {
-    // new feature ...
+    // feature ...
 }.unsafeRunSync()
 
-// execute if flag is set to the given value
 fatalFlag("featureA").ifIs("on") {
-    // new feature ...
+    // feature ...
 }.unsafeRunSync()
 
-// set the flag's value
+fatalFlag("featureA").get[Double]
+
 fatalFlag("featureA").set("off").unsafeRunSync()
 ```
 
 ## Http Api
-**flag4s-api-http4s** and **flag4s-api-akka-http** modules provide http endpoint configurations for http4s and akka-http.
-
 **http4s**
 ```
 import flag4s.api.Http4sFlagApi
@@ -88,7 +111,7 @@ implicit val store = RedisStore("localhost", 6379)
 Http().bindAndHandle(AkkaFlagApi.route(), "localhost", 8080)
 ```
 
-### Apis
+### Endpoints
 
 **create/update a flag**
 ```
