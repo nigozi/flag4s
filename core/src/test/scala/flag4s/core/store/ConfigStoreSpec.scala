@@ -10,7 +10,7 @@ class ConfigStoreSpec extends WordSpec with FeatureSpec {
   private val store = ConfigStore(configFile.getPath)
 
   "store" should {
-    "successfully read a boolean key" in {
+    "read a boolean key" in {
       for {
         value <- store.get[Boolean]("boolFlag")
       } yield {
@@ -18,7 +18,7 @@ class ConfigStoreSpec extends WordSpec with FeatureSpec {
         value.right.get shouldBe "true"
       }
     }
-    "successfully read a string key" in {
+    "read a string key" in {
       for {
         value <- store.get[String]("stringFlag")
       } yield {
@@ -26,7 +26,7 @@ class ConfigStoreSpec extends WordSpec with FeatureSpec {
       value.right.get shouldBe "on"
       }
     }
-    "successfully read a double key" in {
+    "read a double key" in {
       for {
         value <- store.get[Double]("doubleFlag")
       } yield {

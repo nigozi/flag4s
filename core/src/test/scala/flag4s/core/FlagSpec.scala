@@ -12,7 +12,7 @@ class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
   implicit val store: InMemoryStore = new InMemoryStore
 
   "flag" should {
-    "read a flag" in {
+    "find a flag" in {
       val key = randomKey
       for {
         _ <- store.put(key, true)
@@ -31,105 +31,119 @@ class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
       val key = randomKey
       for {
         _ <- store.put(key, true)
-        res <- Some(fatalFlag(key)).pure[IO]
-      } yield res.nonEmpty shouldBe true
+        flag <- fatalFlag(key)
+      } yield {
+        flag.key shouldBe key
+        flag.value shouldBe true
+      }
     }
     "fatal read returns proper response if flag doesn't exist" in {
-      Try(fatalFlag("non-existing")).isFailure shouldBe true
+      Try(fatalFlag("non-existing").unsafeRunSync()).isFailure shouldBe true
     }
     "return true if flag is enabled" in {
       val key = randomKey
       for {
         _ <- store.put(key, true)
-        res <- enabled(fatalFlag(key))
-      } yield res shouldBe true
+        f <- fatalFlag(key)
+        r <- enabled(f)
+      } yield r shouldBe true
     }
     "return false if types mismatch" in {
       val key = randomKey
-      val res = for {
+      for {
         _ <- store.put(key, "string")
-        r <- enabled(fatalFlag(key))
+        f <- fatalFlag(key)
+        r <- enabled(f)
       } yield r shouldBe false
     }
     "execute function if flag is enabled" in {
       val key = randomKey
       for {
         _ <- store.put(key, true)
-        res <- ifEnabled(fatalFlag(key))(true)
+        f <- fatalFlag(key)
+        r <- ifEnabled(f)("flag is on")
       } yield {
-        res.isRight shouldBe true
-        res.right.get shouldBe true
+        r.isRight shouldBe true
+        r.right.get shouldBe "flag is on"
       }
     }
     "return left if flag is disabled" in {
       val key = randomKey
       for {
         _ <- store.put(key, false)
-        res <- ifEnabled(fatalFlag(key))(true)
+        res <- ifEnabled(fatalFlag(key).unsafeRunSync())(true)
       } yield res.isLeft shouldBe true
     }
     "return left if types mismatch" in {
       val key = randomKey
       for {
         _ <- store.put(key, "string")
-        res <- ifEnabled(fatalFlag(key))(true)
-      } yield res.isLeft shouldBe true
+        f <- fatalFlag(key)
+        r <- ifEnabled(f)(true)
+      } yield r.isLeft shouldBe true
     }
     "return true if value matches" in {
       val key = randomKey
       for {
         _ <- store.put(key, "string")
-        res <- is(fatalFlag(key), "string")
-      } yield res shouldBe true
+        f <- fatalFlag(key)
+        r <- is(f, "string")
+      } yield r shouldBe true
     }
     "return false if value doesn't match" in {
       val key = randomKey
       for {
         _ <- store.put(key, "foo")
-        res <- is(fatalFlag(key), "bar")
-      } yield res shouldBe false
+        f <- fatalFlag(key)
+        r <- is(f, "bar")
+      } yield r shouldBe false
     }
     "return left if types mismatch in value check" in {
       val key = randomKey
       for {
         _ <- store.put(key, true)
-        res <- is(fatalFlag(key), "string")
-      } yield res shouldBe false
+        f <- fatalFlag(key)
+        r <- is(f, "string")
+      } yield r shouldBe false
     }
     "execute function if values match" in {
       val key = randomKey
       for {
         _ <- store.put(key, "foo")
-        res <- ifIs(fatalFlag(key), "foo")(true)
+        f <- fatalFlag(key)
+        r <- ifIs(f, "foo")(true)
       } yield {
-        res.isRight shouldBe true
-        res.right.get shouldBe true
+        r.isRight shouldBe true
+        r.right.get shouldBe true
       }
     }
     "not execute function if values don't match" in {
       val key = randomKey
       for {
         _ <- store.put(key, "foo")
-        res <- ifIs(fatalFlag(key), "bar")(true)
-      } yield res.isRight shouldBe true
+        f <- fatalFlag(key)
+        r <- ifIs(f, "bar")(true)
+      } yield r.isRight shouldBe true
     }
-    "set flag value" in {
+    "set flag's value" in {
       val key = randomKey
       for {
         _ <- store.put(key, "foo")
-        _ <- set(fatalFlag(key), "bar")
-        res <- store.get[String](key)
+        f <- fatalFlag(key)
+        _ <- set(f, "bar")
+        r <- store.get[String](key)
       } yield {
-        res.isRight shouldBe true
-        res.right.get shouldBe "bar"
+        r.isRight shouldBe true
+        r.right.get shouldBe "bar"
       }
     }
     "return left if failed to set the flag's value" in {
       val key = randomKey
       for {
         _ <- store.put(key, "foo")
-        res <- set(fatalFlag(key), true)
-      } yield res.isLeft shouldBe true
+        f <- fatalFlag(key)
+        r <- set(f, true)
+      } yield r.isLeft shouldBe true
     }
     "create a new flag" in {
       val key = randomKey
@@ -148,14 +162,14 @@ class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
         res <- newFlag(key, true)
       } yield res.isLeft shouldBe true
     }
-    "withFlag should run the function if flag is on" in {
+    "run the function if flag's value is true" in {
       val key = randomKey
       for {
         _ <- store.put(key, true)
         res <- withFlag(key, true)("flag is on!")
       } yield res.isRight shouldBe true
     }
-    "withFlag should not run the function if flag is off" in {
+    "not run the function if flag's value is false" in {
       val key = randomKey
       for {
         _ <- store.put(key, false)

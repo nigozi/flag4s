@@ -49,7 +49,7 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
         get {
           (for {
             keys <- store.keys().unsafeRunSync()
-            flags <- keys.map(k => fatalFlag(k).asJson).asRight
+            flags <- keys.map(k => fatalFlag(k).unsafeRunSync().asJson).asRight
           } yield flags.asJson) match {
             case Right(r) => complete(200, r)
             case Left(e) => complete(400, e.getMessage)

@@ -42,7 +42,7 @@ object Http4sFlagApi {
       case GET -> Root / `basePath` =>
         (for {
           keys <- store.keys().unsafeRunSync()
-          flags <- keys.map(k => fatalFlag(k).asJson).asRight
+          flags <- keys.map(k => fatalFlag(k).unsafeRunSync().asJson).asRight
         } yield flags.asJson) match {
           case Right(r) => Ok(r)
           case Left(e) => BadRequest(errJson(e))

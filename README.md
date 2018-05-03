@@ -16,7 +16,7 @@ libraryDependencies += "org.typelevel" %% "cats-effect" % "version"
 
 ## Core
 ```
-libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.2"
+libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.3"
 ```
 
 ### Choose your key/val store:
@@ -48,11 +48,11 @@ all return types are IO, execute or compose them yourself.
 ```
 import flag4s.core._
 
-flag("featureA") // returns the flag as type of IO[Either[Throwable, Flag]]
+flag("featureA") // returns the flag as type of Either[Throwable, Flag]
 
 fatalFlag("featureA") // returns the flag or throws exception if flag doesn't exist
 
-withFlag("featureA", true) { // executes the function if the boolean flag is on
+withFlag("featureA", true) { // executes the function if flag's value is true
   // new feature ...
 }
 
@@ -62,15 +62,15 @@ withFlag("featureB", "enabled") { // executes the function if the flag's value i
 
 newFlag("featureC", true) // creates a new flag with value true
 
-enabled(flag) // checks if the boolean flag is on
+enabled(flag) // checks if the flag's value is true
 
-is(flag, "on") // checks if the non-boolean flag's value is "on"
+is(flag, "on") // checks if the flag's value is "on"
 
-ifEnabled(flag) { // executes the given function if the boolean flag is on
+ifEnabled(flag) { // executes the given function if the flag's value is true
     // feature
 }
 
-ifIs(flag, "enabled") { // executes the function if the non-boolean flag's value is "enabled" 
+ifIs(flag, "enabled") { // executes the function if the flag's value is "enabled" 
     // feature
 }
 
@@ -86,7 +86,8 @@ there are also some syntax sugars for convenience:
 import flag4s.core._
 import flag4s.syntax._
 
-val flag = fatalFlag("featureA") 
+val flag = fatalFlag("featureA").unsafeRunSync()
+
 flag.enabled
 
 flag.is("on")
@@ -107,7 +108,7 @@ flag.set("off")
 ## Http Api
 **http4s**
 ```
-libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.2"
+libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.3"
 ```
 ```
 import flag4s.api.Http4sFlagApi
@@ -126,7 +127,7 @@ for {
 
 **akka-http**
 ```
-libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.2"
+libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.3"
 ```
 ```
 import flag4s.api.AkkaFlagApi

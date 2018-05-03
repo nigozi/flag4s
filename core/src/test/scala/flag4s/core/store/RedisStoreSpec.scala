@@ -12,7 +12,7 @@ class RedisStoreSpec
   extends WordSpec with FeatureSpec {
 
   "store" should {
-    "successfully store a key/value" in {
+    "store a key/val" in {
       implicit val s = store
       val key = randomKey
       for {
@@ -20,7 +20,15 @@ class RedisStoreSpec
       } yield res.isRight shouldBe true
     }
 
-    "successfully get a key's value" in {
+    "fail to store a key/val" in {
+      implicit val s = store
+      val key = randomKey
+      for {
+        res <- failingStore.put(key, true)
+      } yield res.isLeft shouldBe true
+    }
+
+    "find a key" in {
       implicit val s = store
       val key = randomKey
       for {
@@ -31,7 +39,15 @@ class RedisStoreSpec
       }
     }
 
-    "successfully get list of key/values" in {
+    "fail to find a key" in {
+      implicit val s = store
+      val key = randomKey
+      for {
+        res <- failingStore.put(key, "value")
+      } yield res.isLeft shouldBe true
+    }
+
+    "get key/vals" in {
       implicit val s = store
       val key1 = randomKey
       val key2 = randomKey
@@ -44,9 +60,17 @@ class RedisStoreSpec
         res.right.get should contain allElementsOf List(key1, key2)
       }
     }
+
+    "fail to get key/vals" in {
+      implicit val s = store
+      for {
+        res <- failingStore.keys()
+      } yield res.isLeft shouldBe true
+    }
   }
 
   def store: Store = new MockStore
+  def failingStore: Store = new MockStore
 
   class MockClient extends RedisClient {
     override def initialize : Boolean = true
@@ -55,11 +79,29 @@ class RedisStoreSpec
 
     override def set(key: Any, value: Any)(implicit format: Format): Boolean = true
 
+    override def del(key: Any, keys: Any*)(implicit format: Format): Option[Long] = Some(1l)
+
     override def keys[A](pattern: Any = "*")(implicit format: Format, parse: Parse[A]): Option[List[Option[A]]] = Some(List(Some("key".asInstanceOf[A])))
+  }
+
+  class FailingClient extends RedisClient {
+    override def initialize : Boolean = true
+
+    override def get[A](key: Any)(implicit format: Format, parse: Parse[A]): Option[A] = None
+
+    override def set(key: Any, value: Any)(implicit format: Format): Boolean = false
+
+    override def del(key: Any, keys: Any*)(implicit format: Format): Option[Long] = None
+
+    override def keys[A](pattern: Any = "*")(implicit format: Format, parse: Parse[A]): Option[List[Option[A]]] = None
   }
 
   class MockStore extends RedisStore("host", 6379) {
     override def redisClient = new MockClient
+  }
+
+  class FailingStore extends RedisStore("host", 6379) {
+    override def redisClient = new FailingClient
   }
 
 }

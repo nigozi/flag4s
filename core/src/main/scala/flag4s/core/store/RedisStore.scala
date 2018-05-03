@@ -22,7 +22,7 @@ class RedisStore(
 
   def redisClient = new RedisClient(host, port, database, secret)
 
-  val client = redisClient
+  private lazy val client = redisClient
 
   override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] =
     if (client.set(key, StoredValue(value.asJson).asJson))

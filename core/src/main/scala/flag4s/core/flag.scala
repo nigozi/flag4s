@@ -30,10 +30,10 @@ trait FlagOps {
     * @param store key/val store
     * @return Flag if found, Throws Exception otherwise
     */
-  def fatalFlag(key: String)(implicit store: Store): Flag = flag(key).unsafeRunSync().valueOr(e => sys.error(e.getMessage))
+  def fatalFlag(key: String)(implicit store: Store): IO[Flag] = flag(key).map(_.valueOr(e => sys.error(e.getMessage)))
 
   /**
-    * executes the function f if the flag is on (flag's value equals to the given value)
+    * executes the function f if the flag is set to the given value
     * @param key flag's key
     * @param value expected value
     * @param f function to execute if flag is on
@@ -56,7 +56,7 @@ trait FlagOps {
     * @param value flag's value
     * @param store key/val store
     * @tparam A type of flag
-    * @return Right[Flag] if flag created successfully, Left[Throwable] otherwise
+    * @return Right[Flag] if created successfully, Left[Throwable] otherwise
     */
   def newFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, Flag]] =
     for {
@@ -73,7 +73,7 @@ trait FlagOps {
   def enabled(flag: Flag)(implicit store: Store): IO[Boolean] = is(flag, true)
 
   /**
-    * executes the function f if the flag is on (flag's value is equal to the given value)
+    * executes the function f if the flag's value is true
     * @param flag flag
     * @param f function to execute if flag is on
     * @param store key/val store
@@ -109,7 +109,7 @@ trait FlagOps {
     }
 
   /**
-    * returns the flag's value in the given type
+    * returns the flag's value as the given type
     * @param flag flag
     * @param store key/val store
     * @tparam A desired type
