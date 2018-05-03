@@ -20,7 +20,7 @@ libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.3"
 ```
 
 ### choose your key/val store:
-```
+```scala
 import flag4s.core.store._
 
 implicit val store = ConsulStore("localhost", 8500)
@@ -44,7 +44,9 @@ features {
 all return types are **IO**, you should execute or compose them yourself.
 
 **check flag**
-```
+```scala
+import flag4s.core._
+
 flag("featX") //returns the flag as type of Either[Throwable, Flag] 
 
 fatalFlag("featX") //returns the flag or throws exception if flag doesn't exist
@@ -71,14 +73,14 @@ get[Double](flag) // returns the flag's value as Double
 ```
 
 **create/set flag**
-```
+```scala
 newFlag("featX", true) // creates a new flag with value true
 
 set(flag, "off") // sets the flag's value to "off"
 ```
 
 **syntax**
-```
+```scala
 import flag4s.core._
 import flag4s.syntax._
 
@@ -106,7 +108,7 @@ flag.set("off")
 ```
 libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.3"
 ```
-```
+```scala
 import flag4s.api.Http4sFlagApi
 
 implicit val store = RedisStore("localhost", 6379)
@@ -122,7 +124,7 @@ BlazeBuilder[IO]
 ```
 libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.3"
 ```
-```
+```scala
 import flag4s.api.AkkaFlagApi
 
 implicit val store = RedisStore("localhost", 6379)
