@@ -138,7 +138,7 @@ Http().bindAndHandle(AkkaFlagApi.route(), "localhost", 8080)
 
 **create/update a flag**
 ```
-http PUT localhost:8080/flags key=featureA value="on"
+http PUT localhost:8080/flags key=featureA value=on
 http PUT localhost:8080/flags key=featureB value:=true
 ```
 
