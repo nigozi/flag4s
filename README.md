@@ -115,14 +115,11 @@ import flag4s.api.Http4sFlagApi
 
 implicit val store = RedisStore("localhost", 6379)
 
-def stream(args: List[String], requestShutdown: IO[Unit]) =
-for {
-  exitCode <- BlazeBuilder[IO]
+BlazeBuilder[IO]
     .bindHttp(8080)
     .withWebSockets(true)
     .mountService(Http4sFlagApi.service(), "/")
     .serve
-} yield exitCode
 ```
 
 **akka-http**
