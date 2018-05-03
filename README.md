@@ -6,20 +6,20 @@ flag4s consists of the following modules:
 * flag4s-api-http4s: http endpoints configuration for http4s.
 * flag4s-api-akka-http: http endpoints configuration for akka-http.
 
-# Dependencies
+# dependencies
 flag4s uses IO type from cats-effect for all operations and all return types are IO.
 ```
 libraryDependencies += "org.typelevel" %% "cats-effect" % "version"
 ```
  
-# Usage
+# usage
 
-## Core
+## core
 ```
 libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.3"
 ```
 
-### Choose your key/val store:
+### choose your key/val store:
 ```
 import flag4s.core.store._
 
@@ -39,54 +39,50 @@ features {
 } 
 ```
 
-### Use core functions to manage the flags:
+### use core functions to manage the flags:
 
-**Core Functions**
+all return types are **IO**, you should execute or compose them yourself.
 
-all return types are IO, execute or compose them yourself.
- 
+**check flag**
 ```
-import flag4s.core._
+flag("featX") //returns the flag as type of Either[Throwable, Flag] 
 
-flag("featureA") // returns the flag as type of Either[Throwable, Flag]
+fatalFlag("featX") //returns the flag or throws exception if flag doesn't exist
 
-fatalFlag("featureA") // returns the flag or throws exception if flag doesn't exist
+enabled(flag) //checks if the flag's value is true
 
-withFlag("featureA", true) { // executes the function if flag's value is true
-  // new feature ...
+is(flag, "on") //checks if the flag's value is "on"
+
+withFlag("featX", true) { //executes the code block if flag's value is true
+  //code block
 }
 
-withFlag("featureB", "enabled") { // executes the function if the flag's value is "enabled"
-  // new feature ...
+//or
+
+ifEnabled(flag) { //executes the code block if the flag's value is true
+    //code block
 }
 
-newFlag("featureC", true) // creates a new flag with value true
-
-enabled(flag) // checks if the flag's value is true
-
-is(flag, "on") // checks if the flag's value is "on"
-
-ifEnabled(flag) { // executes the given function if the flag's value is true
-    // feature
-}
-
-ifIs(flag, "enabled") { // executes the function if the flag's value is "enabled" 
-    // feature
+ifIs(flag, "enabled") { //executes the code block if the flag's value is "enabled" 
+    //code block
 }
 
 get[Double](flag) // returns the flag's value as Double
+```
+
+**create/set flag**
+```
+newFlag("featX", true) // creates a new flag with value true
 
 set(flag, "off") // sets the flag's value to "off"
 ```
 
-**Syntax**
-
-there are also some syntax sugars for convenience: 
+**syntax**
 ```
 import flag4s.core._
 import flag4s.syntax._
 
-val flag = fatalFlag("featureA").unsafeRunSync()
+val flag = fatalFlag("featX").unsafeRunSync()
 
 flag.enabled
 
@@ -105,7 +101,7 @@ flag.get[Double]
 flag.set("off")
 ```
 
-## Http Api
+## http Api
 **http4s**
 ```
 libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.3"
@@ -134,7 +130,7 @@ implicit val store = RedisStore("localhost", 6379)
 Http().bindAndHandle(AkkaFlagApi.route(), "localhost", 8080)
 ```
 
-### Endpoints
+### endpoints
 
 **create/update a flag**
 ```
