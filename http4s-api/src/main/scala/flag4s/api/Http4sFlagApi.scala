@@ -2,7 +2,9 @@ package flag4s.api
 
 import cats.effect._
 import cats.instances.either._
+import cats.instances.list._
 import cats.syntax.either._
+import cats.syntax.traverse._
 import org.http4s.HttpService
 import org.http4s.circe._
 import org.http4s.dsl.io._
@@ -18,41 +20,38 @@ import io.circe.syntax._
 object Http4sFlagApi {
   def service(`basePath`: String = "flags")(implicit store: Store): HttpService[IO] =
     HttpService[IO] {
-      case POST -> Root / `basePath` / key / "enable" => switchFlag(key, true).map {
-        case Right(v) => Ok(v.asJson).unsafeRunSync()
-        case Left(e) => BadRequest(errJson(e)).unsafeRunSync()
+      case POST -> Root / `basePath` / key / "enable" => switchFlag(key, true).flatMap {
+        case Right(v) => Ok(v.asJson)
+        case Left(e) => BadRequest(errJson(e))
       }
-      case POST -> Root / `basePath` / key / "disable" => switchFlag(key, false).map {
-        case Right(v) => Ok(v.asJson).unsafeRunSync()
-        case Left(e) => BadRequest(errJson(e)).unsafeRunSync()
+      case POST -> Root / `basePath` / key / "disable" => switchFlag(key, false).flatMap {
+        case Right(v) => Ok(v.asJson)
+        case Left(e) => BadRequest(errJson(e))
       }
       case req@PUT -> Root / `basePath` =>
         for {
-          fl <- req.as[Flag]
-          res <- switchFlag(fl.key, fl.value)
-        } yield res match {
-          case Right(v) => Ok(v).unsafeRunSync()
-          case Left(e) => NotFound(errJson(e)).unsafeRunSync()
-        }
+          f <- req.as[Flag]
+          s <- switchFlag(f.key, f.value)
+          r <- s.map(r => Ok(r.asJson)).valueOr(e => NotFound(errJson(e)))
+        } yield r
       case GET -> Root / `basePath` / key =>
-        flag(key).map {
-          case Right(v) => Ok(v.asJson).unsafeRunSync()
-          case Left(e) => NotFound(errJson(e)).unsafeRunSync()
+        flag(key).flatMap {
+          case Right(v) => Ok(v.asJson)
+          case Left(e) => NotFound(errJson(e))
         }
       case GET -> Root / `basePath` =>
-        (for {
-          keys <- store.keys().unsafeRunSync()
-          flags <- keys.map(k => fatalFlag(k).unsafeRunSync().asJson).asRight
-        } yield flags.asJson) match {
-          case Right(r) => Ok(r)
-          case Left(e) => BadRequest(errJson(e))
-        }
+        for {
+          keys <- store.keys()
+          flags <- mapKeys(keys.valueOr(_ => List.empty)).flatMap(f => Ok(f.asJson))
+        } yield flags
       case DELETE -> Root / `basePath` / key =>
-        store.remove(key).unsafeRunSync() match {
+        store.remove(key).flatMap {
           case Right(_) => Ok()
           case Left(e) => BadRequest(errJson(e))
         }
     }
 
   private def errJson(e: Throwable): Json = e.getMessage.asJson
+
+  private def mapKeys(keys: List[String])(implicit store: Store): IO[List[Flag]] = keys.traverse(fatalFlag)
 }
