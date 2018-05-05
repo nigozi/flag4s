@@ -78,7 +78,7 @@ trait FlagOps {
     * @param value value to set
     * @param store key/val store
     * @tparam A type of flag
-    * @return Right[Flag] if successful, Left[Throwable] otherwise
+    * @return Right[A] if successful, Left[Throwable] otherwise
     */
   def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, A]] =
     for {
