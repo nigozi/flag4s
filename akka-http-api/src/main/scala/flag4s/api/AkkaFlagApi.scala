@@ -35,7 +35,7 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
       path(Segment / "enable") { key =>
         post {
           switchFlag(key, true).unsafeRunSync() match {
-            case Right(v) => complete(v.asJson)
+            case Right(v) => complete(v.value.asJson)
             case Left(e) => complete(400, e.getMessage)
           }
         }
@@ -43,7 +43,7 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
       path(Segment / "disable") { key =>
         post {
           switchFlag(key, false).unsafeRunSync() match {
-            case Right(v) => complete(v.asJson)
+            case Right(v) => complete(v.value.asJson)
             case Left(e) => complete(400, e.getMessage)
           }
         }
@@ -58,7 +58,7 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
           put {
             entity(as[Flag]) { flag =>
               switchFlag(flag.key, flag.value).unsafeRunSync() match {
-                case Right(v) => complete(200, v)
+                case Right(v) => complete(200, v.value)
                 case Left(e) => complete(400, e)
               }
             }

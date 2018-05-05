@@ -21,18 +21,18 @@ object Http4sFlagApi {
   def service(`basePath`: String = "flags")(implicit store: Store): HttpService[IO] =
     HttpService[IO] {
       case POST -> Root / `basePath` / key / "enable" => switchFlag(key, true).flatMap {
-        case Right(v) => Ok(v.asJson)
+        case Right(v) => Ok(v.value.asJson)
         case Left(e) => BadRequest(errJson(e))
       }
       case POST -> Root / `basePath` / key / "disable" => switchFlag(key, false).flatMap {
-        case Right(v) => Ok(v.asJson)
+        case Right(v) => Ok(v.value.asJson)
         case Left(e) => BadRequest(errJson(e))
       }
       case req@PUT -> Root / `basePath` =>
         for {
           f <- req.as[Flag]
           s <- switchFlag(f.key, f.value)
-          r <- s.map(r => Ok(r.asJson)).valueOr(e => NotFound(errJson(e)))
+          r <- s.map(r => Ok(r.value.asJson)).valueOr(e => NotFound(errJson(e)))
         } yield r
       case GET -> Root / `basePath` / key =>
         flag(key).flatMap {

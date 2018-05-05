@@ -1,8 +1,8 @@
 package flag4s.core
 
 import cats.effect.IO
-import cats.syntax.either._
 import cats.syntax.applicative._
+import cats.syntax.either._
 
 import flag4s.core.store.Store
 import flag4s.syntax._
@@ -24,6 +24,18 @@ trait FlagOps {
   def fatalFlag(key: String)(implicit store: Store): IO[Flag] = flag(key).map(_.valueOr(e => sys.error(e.getMessage)))
 
   /**
+    * finds the flag
+    *
+    * @param key   flag's key
+    * @param store key/val store
+    * @return Right[Flag] if found, Left[Throwable] otherwise
+    */
+  def flag(key: String)(implicit store: Store): IO[Either[Throwable, Flag]] =
+    for {
+      rv <- store.rawValue(key)
+    } yield rv.map(v => Flag(key, v))
+
+  /**
     * executes the function f if the flag is set to the given value
     *
     * @param key   flag's key
@@ -43,18 +55,6 @@ trait FlagOps {
     }
 
   /**
-    * finds the flag
-    *
-    * @param key   flag's key
-    * @param store key/val store
-    * @return Right[Flag] if found, Left[Throwable] otherwise
-    */
-  def flag(key: String)(implicit store: Store): IO[Either[Throwable, Flag]] =
-    for {
-      rv <- store.rawValue(key)
-    } yield rv.map(v => Flag(key, v))
-
-  /**
     * switches the flag's value to the given value
     *
     * @param key   flag's key
@@ -62,13 +62,16 @@ trait FlagOps {
     * @tparam A type of flag
     * @return Right[Flag] if successful, Left[Throwable] otherwise
     */
-  def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, A]] = {
+  def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, Flag]] = {
     val valid = flag(key).flatMap {
       case Right(f) => checkType(f, value)
       case _ => Right((): Unit).pure[IO]
     }
 
-    valid.flatMap(_ => store.put(key, value))
+    for {
+      _ <- valid
+      r <- store.put(key, value)
+    } yield r.map(v => Flag(key, v.asJson))
   }
 
   /**
@@ -78,13 +81,13 @@ trait FlagOps {
     * @param value value to set
     * @param store key/val store
     * @tparam A type of flag
-    * @return Right[A] if successful, Left[Throwable] otherwise
+    * @return Right[Flag] if successful, Left[Throwable] otherwise
     */
-  def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, A]] =
+  def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Flag]] =
     for {
       _ <- checkType(flag, value)
       res <- store.put(flag.key, value)
-    } yield res
+    } yield res.map(v => Flag(flag.key, v.asJson))
 
   /**
     * creates a new flag
@@ -109,6 +112,17 @@ trait FlagOps {
     * @return true if flag is on false otherwise
     */
   def enabled(flag: Flag)(implicit store: Store): IO[Boolean] = is(flag, true)
+
+  /**
+    * checks if the flag's value is equal to the given value
+    *
+    * @param flag  flag
+    * @param value expected value
+    * @param store key/val store
+    * @tparam A type of flag
+    * @return true if flag is enabled false otherwise
+    */
+  def is[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Boolean] = IO.pure(flag.value == value.asJson)
 
   /**
     * executes the function f if the flag's value is true
@@ -137,17 +151,6 @@ trait FlagOps {
       case true => IO.pure(f.asRight)
       case false => IO.pure(error(s"${flag.value} is not equal to ${value.asJson}").asLeft)
     }
-
-  /**
-    * checks if the flag's value is equal to the given value
-    *
-    * @param flag  flag
-    * @param value expected value
-    * @param store key/val store
-    * @tparam A type of flag
-    * @return true if flag is enabled false otherwise
-    */
-  def is[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Boolean] = IO.pure(flag.value == value.asJson)
 
   /**
     * returns the flag's value as the given type

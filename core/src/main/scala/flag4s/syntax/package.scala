@@ -19,7 +19,7 @@ package object syntax {
 
     def get[A: Decoder](implicit store: Store): IO[Either[Throwable, A]] = FlagOps.get(flag)
 
-    def set[A: Encoder](value: A)(implicit store: Store): IO[Either[Throwable, A]] = FlagOps.set(flag, value)
+    def set[A: Encoder](value: A)(implicit store: Store): IO[Either[Throwable, Flag]] = FlagOps.set(flag, value)
   }
 
 }
