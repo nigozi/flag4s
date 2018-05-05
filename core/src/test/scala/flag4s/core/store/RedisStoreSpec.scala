@@ -13,67 +13,42 @@ class RedisStoreSpec
 
   "store" should {
     "store a key/val" in {
-      implicit val s = store
-      val key = randomKey
-      for {
-        res <- store.put(key, true)
-      } yield res.isRight shouldBe true
+      store.put("key", true).unsafeRunSync().isRight shouldBe true
     }
 
     "fail to store a key/val" in {
-      implicit val s = store
-      val key = randomKey
-      for {
-        res <- failingStore.put(key, true)
-      } yield res.isLeft shouldBe true
+      failingStore.put("key", true).unsafeRunSync().isLeft shouldBe true
     }
 
     "find a key" in {
-      implicit val s = store
-      val key = randomKey
-      for {
-        res <- store.put(key, "value")
-      } yield {
-        res.isRight shouldBe true
-        res.toOption.get shouldBe "value"
-      }
+      val res = store.put("key", "value").unsafeRunSync()
+
+      res.isRight shouldBe true
+      res.toOption.get shouldBe "value"
     }
 
     "fail to find a key" in {
-      implicit val s = store
-      val key = randomKey
-      for {
-        res <- failingStore.put(key, "value")
-      } yield res.isLeft shouldBe true
+      failingStore.put("key", "value").unsafeRunSync().isLeft shouldBe true
     }
 
     "get key/vals" in {
-      implicit val s = store
-      val key1 = randomKey
-      val key2 = randomKey
-      for {
-        _ <- store.put(key1, true)
-        _ <- store.put(key2, true)
-        res <- store.keys()
-      } yield {
-        res.isRight shouldBe true
-        res.right.get should contain allElementsOf List(key1, key2)
-      }
+      val res = store.keys().unsafeRunSync()
+
+      res.isRight shouldBe true
+      res.right.get should contain allElementsOf List("key")
     }
 
     "fail to get key/vals" in {
-      implicit val s = store
-      for {
-        res <- failingStore.keys()
-      } yield res.isLeft shouldBe true
+      failingStore.keys().unsafeRunSync().isLeft shouldBe true
     }
   }
 
   def store: Store = new MockStore
-  def failingStore: Store = new MockStore
+
+  def failingStore: Store = new FailingStore
 
   class MockClient extends RedisClient {
-    override def initialize : Boolean = true
+    override def initialize: Boolean = true
 
     override def get[A](key: Any)(implicit format: Format, parse: Parse[A]): Option[A] = Some("{\"value\": \"on\"}".asInstanceOf[A])
 
@@ -85,7 +60,7 @@ class RedisStoreSpec
   }
 
   class FailingClient extends RedisClient {
-    override def initialize : Boolean = true
+    override def initialize: Boolean = true
 
     override def get[A](key: Any)(implicit format: Format, parse: Parse[A]): Option[A] = None
 

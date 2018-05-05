@@ -11,38 +11,31 @@ class ConfigStoreSpec extends WordSpec with FeatureSpec {
 
   "store" should {
     "read a boolean key" in {
-      for {
-        value <- store.get[Boolean]("boolFlag")
-      } yield {
-        value.isRight shouldBe true
-        value.right.get shouldBe "true"
-      }
+      val value = store.get[String]("boolFlag").unsafeRunSync()
+      value.isRight shouldBe true
+      value.right.get shouldBe "true"
     }
     "read a string key" in {
-      for {
-        value <- store.get[String]("stringFlag")
-      } yield {
+      val value = store.get[String]("stringFlag").unsafeRunSync()
+
       value.isRight shouldBe true
       value.right.get shouldBe "on"
-      }
     }
     "read a double key" in {
-      for {
-        value <- store.get[Double]("doubleFlag")
-      } yield {
+      val value = store.get[String]("doubleFlag").unsafeRunSync()
+
       value.isRight shouldBe true
       value.right.get shouldBe "1.5"
-      }
     }
     "not be able to update a value" in {
-      for {
-        res <- store.put("boolFlag", false)
-      } yield res.isLeft shouldBe true
+      val res = store.put("boolFlag", false).unsafeRunSync()
+
+      res.isLeft shouldBe true
     }
     "not be able to delete a value" in {
-      for {
-        res <- store.remove("boolFlag")
-      } yield res.isLeft shouldBe true
+      val res = store.remove("boolFlag").unsafeRunSync()
+
+      res.isLeft shouldBe true
     }
   }
 }

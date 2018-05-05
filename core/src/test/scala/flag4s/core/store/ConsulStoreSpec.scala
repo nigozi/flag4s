@@ -21,53 +21,31 @@ class ConsulStoreSpec extends WordSpec with FeatureSpec {
 
   "store" should {
     "get a flag" in {
-      for {
-        res <- store.get("key")
-      } yield {
-        res.isRight shouldBe true
-        res.right.get shouldBe "value"
-      }
+      val res = store.get[String]("key").unsafeRunSync()
+
+      res.isRight shouldBe true
+      res.right.get shouldBe "value"
     }
     "fail to get a flag" in {
-      for {
-        res <- failingStore.get("key")
-      } yield res.isLeft shouldBe true
+      failingStore.get("key").unsafeRunSync().isLeft shouldBe true
     }
     "put a flag" in {
-      for {
-        res <- store.put("key", "value")
-      } yield {
-        res.isRight shouldBe true
-        res.right.get shouldBe "value"
-      }
+      val res = store.put("key", "value").unsafeRunSync()
+
+      res.isRight shouldBe true
+      res.right.get shouldBe "value"
     }
     "fail to put a flag" in {
-      for {
-        res <- failingStore.put("key", "value")
-      } yield res.isLeft shouldBe true
-    }
-    "get flags" in {
-      for {
-        res <- store.keys()
-      } yield {
-        res.isRight shouldBe true
-        res.right.get.size shouldBe 2
-      }
+      failingStore.put("key", "value").unsafeRunSync().isLeft shouldBe true
     }
     "fail to get flags" in {
-      for {
-        res <- failingStore.keys()
-      } yield res.isLeft shouldBe true
+      failingStore.keys().unsafeRunSync().isLeft shouldBe true
     }
     "delete flag" in {
-      for {
-        res <- store.remove("key")
-      } yield res.isRight shouldBe true
+      store.remove("key").unsafeRunSync().isRight shouldBe true
     }
     "fail to delete flag" in {
-      for {
-        res <- failingStore.remove("key")
-      } yield res.isLeft shouldBe true
+      failingStore.remove("key").unsafeRunSync().isLeft shouldBe true
     }
   }
 }
@@ -75,7 +53,7 @@ class ConsulStoreSpec extends WordSpec with FeatureSpec {
 class MockStore extends ConsulStore("host", 8500) {
   val service = HttpService[IO] {
     case r if r.method == GET && r.uri.query.toString().contains("raw=true") => Response[IO](Ok).withBody(StoredValue("value".asJson).asJson)
-    case r if r.method == GET && r.uri.query.toString().contains("keys") => Response[IO](Ok).withBody("[\"key1\", \"key2\"]".asJson)
+    case r if r.method == GET && r.uri.query.toString().contains("keys") => Response[IO](Ok).withBody("[\"featureA\", \"featureB\"]".asJson)
     case r if r.method == PUT => Response[IO](Ok).withBodyStream(r.body).pure[IO]
     case r if r.method == DELETE => Response[IO](Ok).withBodyStream(r.body).pure[IO]
   }

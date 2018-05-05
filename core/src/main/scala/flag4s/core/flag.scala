@@ -50,9 +50,9 @@ trait FlagOps {
     flag(key).flatMap {
       case Right(fl) => fl.is(value).map {
         case true => f.asRight
-        case false => error(s"flag $key is off").asLeft
+        case false => error(s"flag $key is not $value").asLeft
       }
-      case _ => Left(error(s"flag $key is off")).pure[IO]
+      case _ => Left(error(s"flag $key not found")).pure[IO]
     }
 
   /**
