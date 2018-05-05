@@ -16,7 +16,7 @@ libraryDependencies += "org.typelevel" %% "cats-effect" % "version"
 
 ## core
 ```
-libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.4"
+libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.5"
 ```
 
 ### choose your key/val store:
@@ -108,7 +108,7 @@ flag.set("off")
 ## http Api
 **http4s**
 ```
-libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.4"
+libraryDependencies += "io.nigo" %% "flag4s-api-http4s" % "0.1.5"
 ```
 ```scala
 import flag4s.api.Http4sFlagApi
@@ -124,7 +124,7 @@ BlazeBuilder[IO]
 
 **akka-http**
 ```
-libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.4"
+libraryDependencies += "io.nigo" %% "flag4s-api-akka-http" % "0.1.5"
 ```
 ```scala
 import flag4s.api.AkkaFlagApi
