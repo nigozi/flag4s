@@ -10,7 +10,6 @@ import org.scalatest.WordSpec
 import org.scalatest.concurrent.ScalaFutures._
 
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import flag4s.api.AkkaFlagApi._
 import flag4s.core._
 import flag4s.core.store.Store
 import io.circe.Json

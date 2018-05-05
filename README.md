@@ -76,6 +76,8 @@ get[Double](flag) // returns the flag's value as Double
 ```scala
 newFlag("featX", true) // creates a new flag with value true
 
+switchFlag("featX", false) // sets the flag's value to false
+
 set(flag, "off") // sets the flag's value to "off"
 ```
 
