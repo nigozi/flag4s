@@ -2,6 +2,7 @@ package flag4s.core
 
 import cats.effect.IO
 import cats.syntax.either._
+import cats.syntax.applicative._
 
 import flag4s.core.store.Store
 import flag4s.syntax._
@@ -62,9 +63,9 @@ trait FlagOps {
     * @return Right[Flag] is successful, Left[Throwable] otherwise
     */
   def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, A]] = {
-    val valid = flag(key).map {
-      case Right(f) => checkType(f, value).unsafeRunSync()
-      case _ => Right((): Unit)
+    val valid = flag(key).flatMap {
+      case Right(f) => checkType(f, value)
+      case _ => Right((): Unit).pure[IO]
     }
 
     valid.flatMap(_ => store.put(key, value))
