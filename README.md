@@ -2,12 +2,12 @@
 flag4s helps you manage feature flags in your application via scala functions and http apis.
 
 flag4s consists of the following modules:
-* flag4s-core: core libraries, key/val stores and scala functions.
+* flag4s-core: default key/val stores, syntaxes and scala functions.
 * flag4s-api-http4s: http endpoints configuration for http4s.
 * flag4s-api-akka-http: http endpoints configuration for akka-http.
 
 # dependencies
-flag4s uses IO type from cats-effect for all operations and all return types are IO.
+flag4s uses **IO** type from cats-effect for all operations and all return types are IO.
 ```
 libraryDependencies += "org.typelevel" %% "cats-effect" % "version"
 ```
@@ -24,13 +24,14 @@ libraryDependencies += "io.nigo" %% "flag4s-core" % "0.1.5"
 import flag4s.core.store._
 
 implicit val store = ConsulStore("localhost", 8500)
-// implicit val store = RedisStore("localhost", 6379)
-// implicit val store = ConfigStore("path-to-config-file")
+//implicit val store = RedisStore("localhost", 6379)
+//implicit val store = ConfigStore("path-to-config-file")
 ```
 
 * you can choose one of the existing stores or create your own by implementing the Store trait.
-* ConfigStore is not recommended as it does not support value modification. Also it only supports String type, means that all the value checks must be String.
-To use the ConfigStore, put your feature flags in a .conf file in the following format:
+* ConfigStore is not recommended as it does not support value modification. 
+Also it only supports String type, you can define the flags as any type but all the value checks will be as String.
+To use the ConfigStore, put the flags in a .conf file in the following format:
 ```
 features {
   featureA: true
@@ -43,7 +44,7 @@ features {
 
 all return types are **IO**, you should execute or compose them yourself.
 
-**check flag**
+**read a flag**
 ```scala
 import flag4s.core._
 
@@ -51,34 +52,38 @@ flag("featX") //returns the flag as type of Either[Throwable, Flag]
 
 fatalFlag("featX") //returns the flag or throws exception if flag doesn't exist
 
-enabled(flag) //checks if the flag's value is true
+enabled(boolFlag) //checks if the flag's value is true
 
-is(flag, "on") //checks if the flag's value is "on"
+is(strFlag, "on") //checks if the flag's value is "on"
 
-withFlag("featX", true) { //executes the code block if flag's value is true
+withFlag("boolFlag", true) { //executes the code block if flag's value is true
+  //code block
+}
+
+withFlag("strFlag", "on") { //executes the code block if flag's value is "on"
   //code block
 }
 
 //or
 
-ifEnabled(flag) { //executes the code block if the flag's value is true
+ifEnabled(boolFlag) { //executes the code block if the flag's value is true
     //code block
 }
 
-ifIs(flag, "enabled") { //executes the code block if the flag's value is "enabled" 
+ifIs(strFlag, "on") { //executes the code block if the flag's value is "on"
     //code block
 }
 
-get[Double](flag) // returns the flag's value as Double
+get[Double](dblFlag) //returns the flag's value as Double
 ```
 
 **create/set flag**
 ```scala
-newFlag("featX", true) // creates a new flag with value true
+newFlag("boolFlag", true) //creates a new flag with value true, Left if flag already exists
 
-switchFlag("featX", false) // sets the flag's value to false
+switchFlag("boolFlag", false) //sets the flag's value to false, creates the flag if doesn't exist
 
-set(flag, "off") // sets the flag's value to "off"
+set(strFlag, "off") //sets the flag's value to "off", Left if flag doesn't exist
 ```
 
 **syntax**
@@ -86,23 +91,29 @@ set(flag, "off") // sets the flag's value to "off"
 import flag4s.core._
 import flag4s.syntax._
 
-val flag = fatalFlag("featX").unsafeRunSync()
+boolFlag.enabled
 
-flag.enabled
+strFlag.is("on")
 
-flag.is("on")
+dblFlag.is(1.1)
 
-flag.ifEnabled {
-    // feature ...
+boolFlag.ifEnabled {
+    //code block
 }
 
-flag.ifIs("on") {
-    // feature ...
+strFlag.ifIs("on") {
+    //code block
 }
 
-flag.get[Double]
+dblFlag.ifIs(1.1) {
+    //code block
+}
 
-flag.set("off")
+boolFlag.set(false)
+
+strFlag.set("off")
+
+dblFlag.set(2.0)
 ```
 
 ## http Api
