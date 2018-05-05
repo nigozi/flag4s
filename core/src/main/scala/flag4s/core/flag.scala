@@ -60,7 +60,7 @@ trait FlagOps {
     * @param key   flag's key
     * @param value new value
     * @tparam A type of flag
-    * @return Right[Flag] is successful, Left[Throwable] otherwise
+    * @return Right[Flag] if successful, Left[Throwable] otherwise
     */
   def switchFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, A]] = {
     val valid = flag(key).flatMap {
@@ -78,7 +78,7 @@ trait FlagOps {
     * @param value value to set
     * @param store key/val store
     * @tparam A type of flag
-    * @return Right[Flag] is successful, Left[Throwable] otherwise
+    * @return Right[Flag] if successful, Left[Throwable] otherwise
     */
   def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, A]] =
     for {
