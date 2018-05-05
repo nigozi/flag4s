@@ -3,8 +3,11 @@ package flag4s.api
 import scala.concurrent.ExecutionContext
 
 import akka.http.scaladsl.server.Directives
+import cats.effect.IO
 import cats.instances.either._
+import cats.instances.list._
 import cats.syntax.either._
+import cats.syntax.traverse._
 
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import flag4s.core.{flag, _}
@@ -48,12 +51,9 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
       pathEnd {
         get {
           (for {
-            keys <- store.keys().unsafeRunSync()
-            flags <- keys.map(k => fatalFlag(k).unsafeRunSync().asJson).asRight
-          } yield flags.asJson) match {
-            case Right(r) => complete(200, r)
-            case Left(e) => complete(400, e.getMessage)
-          }
+            keys <- store.keys()
+            flags <- mapKeys(keys.valueOr(_ => List.empty)).map(f => complete(200, f.asJson))
+          } yield flags).unsafeRunSync()
         } ~
           put {
             entity(as[Flag]) { flag =>
@@ -65,4 +65,6 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
           }
       }
   }
+
+  private def mapKeys(keys: List[String])(implicit store: Store): IO[List[Flag]] = keys.traverse(fatalFlag)
 }
