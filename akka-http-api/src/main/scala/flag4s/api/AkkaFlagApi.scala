@@ -12,6 +12,7 @@ import cats.syntax.traverse._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import flag4s.core.{flag, _}
 import flag4s.core.store.Store
+import io.circe.Json
 import io.circe.Encoder._
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -22,13 +23,13 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
       get {
         flag(key).unsafeRunSync() match {
           case Right(v) => complete(v.asJson)
-          case Left(e) => complete(404, e.getMessage)
+          case Left(e) => complete(404, errJson(e))
         }
       } ~
         delete {
           store.remove(key).unsafeRunSync() match {
             case Right(_) => complete()
-            case Left(e) => complete(404, e.getMessage)
+            case Left(e) => complete(404, errJson(e))
           }
         }
     } ~
@@ -36,7 +37,7 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
         post {
           switchFlag(key, true).unsafeRunSync() match {
             case Right(v) => complete(v.value.asJson)
-            case Left(e) => complete(400, e.getMessage)
+            case Left(e) => complete(400, errJson(e))
           }
         }
       } ~
@@ -44,7 +45,7 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
         post {
           switchFlag(key, false).unsafeRunSync() match {
             case Right(v) => complete(v.value.asJson)
-            case Left(e) => complete(400, e.getMessage)
+            case Left(e) => complete(400, errJson(e))
           }
         }
       } ~
@@ -59,12 +60,14 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
             entity(as[Flag]) { flag =>
               switchFlag(flag.key, flag.value).unsafeRunSync() match {
                 case Right(v) => complete(200, v.value)
-                case Left(e) => complete(400, e)
+                case Left(e) => complete(400, errJson(e))
               }
             }
           }
       }
   }
+
+  private def errJson(e: Throwable): Json = e.getMessage.asJson
 
   private def mapKeys(keys: List[String])(implicit store: Store): IO[List[Flag]] = keys.traverse(fatalFlag)
 }
