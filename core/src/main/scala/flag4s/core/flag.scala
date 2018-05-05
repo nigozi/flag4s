@@ -47,11 +47,12 @@ trait FlagOps {
     * @return Right[B] if flag is on, Left[Throwable] otherwise.
     */
   def withFlag[A: Encoder, B](key: String, value: A)(f: => B)(implicit store: Store): IO[Either[Throwable, B]] =
-    for {
-      flag <- flag(key)
-    } yield flag match {
-      case Right(fl) if fl.is(value).unsafeRunSync() => f.asRight
-      case _ => error(s"flag $key is off").asLeft
+    flag(key).flatMap {
+      case Right(fl) => fl.is(value).map {
+        case true => f.asRight
+        case false => error(s"flag $key is off").asLeft
+      }
+      case _ => Left(error(s"flag $key is off")).pure[IO]
     }
 
   /**
@@ -68,10 +69,10 @@ trait FlagOps {
       case _ => Right((): Unit).pure[IO]
     }
 
-    for {
-      _ <- valid
-      r <- store.put(key, value)
-    } yield r.map(v => Flag(key, v.asJson))
+    valid.flatMap {
+      case Right(_) => saveFlag(key, value)
+      case Left(e) => Left(e).pure[IO]
+    }
   }
 
   /**
@@ -84,10 +85,10 @@ trait FlagOps {
     * @return Right[Flag] if successful, Left[Throwable] otherwise
     */
   def set[A: Encoder](flag: Flag, value: A)(implicit store: Store): IO[Either[Throwable, Flag]] =
-    for {
-      _ <- checkType(flag, value)
-      res <- store.put(flag.key, value)
-    } yield res.map(v => Flag(flag.key, v.asJson))
+    checkType(flag, value).flatMap {
+      case Right(_) => saveFlag(flag.key, value)
+      case Left(e) => Left(e).pure[IO]
+    }
 
   /**
     * creates a new flag
@@ -161,6 +162,12 @@ trait FlagOps {
     * @return Right[A] if successful, Left[Throwable] otherwise
     */
   def get[A: Decoder](flag: Flag)(implicit store: Store): IO[Either[Throwable, A]] = IO.pure(decode[A](flag.value.toString()))
+
+  private def saveFlag[A: Encoder](key: String, value: A)(implicit store: Store): IO[Either[Throwable, Flag]] =
+    store.put(key, value).map {
+      case Right(v) => Flag(key, v.asJson).asRight
+      case Left(e) => Left(e)
+    }
 }
 
 object FlagOps extends FlagOps
