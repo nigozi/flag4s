@@ -1,14 +1,11 @@
 package flag4s.core
 
+import io.circe.syntax._
+import org.scalatest.wordspec.AnyWordSpec
+
 import scala.util.Try
 
-import cats.effect.IO
-import cats.syntax.applicative._
-import org.scalatest.WordSpec
-
-import io.circe.syntax._
-
-class FlagSpec extends WordSpec with FeatureSpec with FlagOps {
+class FlagSpec extends AnyWordSpec with FeatureSpec with FlagOps {
   implicit val store: InMemoryStore = new InMemoryStore
 
   "flag" should {

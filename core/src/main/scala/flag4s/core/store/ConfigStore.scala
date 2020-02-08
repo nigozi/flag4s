@@ -2,22 +2,26 @@ package flag4s.core.store
 
 import java.io.File
 
-import scala.concurrent.ExecutionContext
-
 import cats.effect.IO
 import cats.syntax.applicative._
 import cats.syntax.either._
-import pureconfig.loadConfig
-
 import flag4s.core._
-import io.circe.{Encoder, Json}
 import io.circe.syntax._
+import io.circe.{Encoder, Json}
+import pureconfig.generic.semiauto._
+import pureconfig.{ConfigReader, ConfigSource}
+
+import scala.concurrent.ExecutionContext
 
 case class Config(features: Map[String, String])
 
+object Config {
+  implicit val configReader: ConfigReader[Config] = deriveReader
+}
+
 class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
   val config: Either[Throwable, Config] =
-    loadConfig[Config](new File(path).toPath).leftMap(e => error(e.head.description))
+    ConfigSource.file(new File(path).toPath).load[Config].leftMap(e => error(e.head.description))
 
   override def put[A: Encoder](key: String, value: A): IO[Either[Throwable, A]] =
     IO.pure(error("value modification is not supported in config store").asLeft)

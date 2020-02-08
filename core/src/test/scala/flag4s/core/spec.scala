@@ -4,15 +4,15 @@ import java.util.UUID
 
 import cats.effect.IO
 import cats.syntax.applicative._
-import org.http4s.{EntityDecoder, Response, Status}
-import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers}
-
 import flag4s.core.store.{Store, StoredValue}
-import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
+import io.circe.{Encoder, Json}
+import org.http4s.{EntityDecoder, Response, Status}
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 trait FeatureSpec
   extends Matchers
@@ -41,7 +41,7 @@ class InMemoryStore extends Store {
     Right(map.keySet.toList).pure[IO]
 
   def remove(key: String): IO[Either[Throwable, Unit]] =
-    map.remove(key).map(_ => Right())
+    map.remove(key).map(_ => Right(()))
       .getOrElse(Left(error(s"failed to delete flag $key")))
       .pure[IO]
 

@@ -28,7 +28,7 @@ object AkkaFlagApi extends Directives with FailFastCirceSupport {
       } ~
         delete {
           store.remove(key).unsafeRunSync() match {
-            case Right(_) => complete()
+            case Right(_) => complete(())
             case Left(e) => complete(404, errJson(e))
           }
         }

@@ -1,24 +1,22 @@
 package flag4s.api
 
 import cats.effect.IO
-import cats.instances.either._
-import org.http4s.{EntityDecoder, HttpService, Uri}
-import org.http4s.circe._
-import org.http4s.client.dsl.Http4sClientDsl
-import org.http4s.dsl.io._
-import org.scalatest.WordSpec
-
 import flag4s.core._
 import flag4s.core.store.Store
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
+import org.http4s.circe._
+import org.http4s.client.dsl.Http4sClientDsl
+import org.http4s.dsl.io._
+import org.http4s.{EntityDecoder, HttpRoutes, Uri}
+import org.scalatest.wordspec.AnyWordSpec
 
-class Http4sFlagApiSpec extends WordSpec with Http4sClientDsl[IO] with FeatureSpec {
+class Http4sFlagApiSpec extends AnyWordSpec with Http4sClientDsl[IO] with FeatureSpec {
   implicit val store: InMemoryStore = new InMemoryStore
   implicit val decoder: EntityDecoder[IO, Flag] = jsonOf[IO, Flag]
-  val service: HttpService[IO] = flagService(store)
+  val service: HttpRoutes[IO] = flagService(store)
 
   "api" should {
     "read a flag" in {
@@ -61,7 +59,7 @@ class Http4sFlagApiSpec extends WordSpec with Http4sClientDsl[IO] with FeatureSp
     }
     "save a new flag" in {
       val key = randomKey
-      val req = PUT(Uri.unsafeFromString("/flags")).withBody(Flag(key, true.asJson).asJson).unsafeRunSync()
+      val req = PUT(Uri.unsafeFromString("/flags")).unsafeRunSync().withEntity(Flag(key, true.asJson).asJson)
       val res = service.run(req).value.map(_.get)
 
       statusCheck(res, Ok) shouldBe true
@@ -82,7 +80,7 @@ class Http4sFlagApiSpec extends WordSpec with Http4sClientDsl[IO] with FeatureSp
       val key = randomKey
       store.put(key, true).unsafeRunSync()
 
-      val req = PUT(Uri.unsafeFromString("/flags")).withBody(Flag(key, false.asJson).asJson).unsafeRunSync()
+      val req = PUT(Uri.unsafeFromString("/flags")).unsafeRunSync().withEntity(Flag(key, false.asJson).asJson)
       val res = service.run(req).value.map(_.get)
 
       statusCheck(res, Ok) shouldBe true
