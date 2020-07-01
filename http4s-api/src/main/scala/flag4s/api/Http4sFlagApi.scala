@@ -1,25 +1,23 @@
 package flag4s.api
 
 import cats.effect._
-import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.either._
 import cats.syntax.traverse._
-import org.http4s.HttpService
+import flag4s.core.store.Store
+import flag4s.core.store.Store._
+import flag4s.core.{flag, _}
+import io.circe.Encoder._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import org.http4s.HttpRoutes
 import org.http4s.circe._
 import org.http4s.dsl.io._
 
-import flag4s.core.{flag, _}
-import flag4s.core.store.Store
-import flag4s.core.store.Store._
-import io.circe._
-import io.circe.Encoder._
-import io.circe.generic.auto._
-import io.circe.syntax._
-
 object Http4sFlagApi {
-  def service(`basePath`: String = "flags")(implicit store: Store): HttpService[IO] =
-    HttpService[IO] {
+  def service(`basePath`: String = "flags")(implicit store: Store): HttpRoutes[IO] =
+    HttpRoutes.of[IO] {
       case POST -> Root / `basePath` / key / "enable" => switchFlag(key, true).flatMap {
         case Right(v) => Ok(v.value.asJson)
         case Left(e) => BadRequest(errJson(e))

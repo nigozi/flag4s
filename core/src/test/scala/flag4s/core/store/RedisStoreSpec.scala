@@ -1,15 +1,16 @@
 package flag4s.core.store
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import com.redis.RedisClient
+import com.redis.api.StringApi
 import com.redis.serialization.{Format, Parse}
-import org.scalatest.WordSpec
-
 import flag4s.core.FeatureSpec
+import org.scalatest.wordspec.AnyWordSpec
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 
 class RedisStoreSpec
-  extends WordSpec with FeatureSpec {
+  extends AnyWordSpec with FeatureSpec {
 
   "store" should {
     "store a key/val" in {
@@ -48,23 +49,23 @@ class RedisStoreSpec
   def failingStore: Store = new FailingStore
 
   class MockClient extends RedisClient {
-    override def initialize: Boolean = true
+    override def connect: Boolean = true
 
     override def get[A](key: Any)(implicit format: Format, parse: Parse[A]): Option[A] = Some("{\"value\": \"on\"}".asInstanceOf[A])
 
-    override def set(key: Any, value: Any)(implicit format: Format): Boolean = true
+    override def set(key: Any, value: Any, whenSet: StringApi.SetBehaviour, expire: Duration)(implicit format: Format): Boolean = true
 
-    override def del(key: Any, keys: Any*)(implicit format: Format): Option[Long] = Some(1l)
+    override def del(key: Any, keys: Any*)(implicit format: Format): Option[Long] = Some(1L)
 
     override def keys[A](pattern: Any = "*")(implicit format: Format, parse: Parse[A]): Option[List[Option[A]]] = Some(List(Some("key".asInstanceOf[A])))
   }
 
   class FailingClient extends RedisClient {
-    override def initialize: Boolean = true
+    override def connect: Boolean = true
 
     override def get[A](key: Any)(implicit format: Format, parse: Parse[A]): Option[A] = None
 
-    override def set(key: Any, value: Any)(implicit format: Format): Boolean = false
+    override def set(key: Any, value: Any, whenSet: StringApi.SetBehaviour, expire: Duration)(implicit format: Format): Boolean = false
 
     override def del(key: Any, keys: Any*)(implicit format: Format): Option[Long] = None
 

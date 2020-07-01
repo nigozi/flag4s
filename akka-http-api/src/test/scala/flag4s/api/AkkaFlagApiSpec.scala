@@ -4,20 +4,17 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.{ContentTypes, MessageEntity, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import cats.instances.either._
-import org.http4s.circe._
-import org.scalatest.WordSpec
-import org.scalatest.concurrent.ScalaFutures._
-
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import flag4s.core._
 import flag4s.core.store.Store
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
+import org.scalatest.concurrent.ScalaFutures._
+import org.scalatest.wordspec.AnyWordSpec
 
 
-class AkkaFlagApiSpec extends WordSpec with ScalatestRouteTest with FailFastCirceSupport with FeatureSpec {
+class AkkaFlagApiSpec extends AnyWordSpec with ScalatestRouteTest with FailFastCirceSupport with FeatureSpec {
   implicit val store: InMemoryStore = new InMemoryStore
   val r = flagRoute(store)
 

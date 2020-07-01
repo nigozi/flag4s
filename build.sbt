@@ -3,9 +3,12 @@ import ReleaseTransformations._
 
 name := "flag4s"
 
-scalaVersion := "2.12.6"
+scalaVersion in ThisBuild := "2.12.11"
 
-scalacOptions in ThisBuild += "-Ypartial-unification"
+scalacOptions in ThisBuild ++= Seq(
+  "-Ypartial-unification",
+  "-deprecation"
+)
 
 lazy val publishSettings = Seq(
   organization := "io.nigo",
@@ -40,10 +43,18 @@ lazy val releaseSettings = Seq (
   )
 )
 
-val catsVersion = "1.1.0"
-val catsEffectVersion = "1.0.0-RC"
-val circeVersion = "0.9.3"
-val http4sVersion = "0.18.9"
+val akkaVersion = "2.6.4"
+val akkaHttpVersion = "10.1.11"
+val akkaHttpCirceVersion = "1.31.0"
+val catsVersion = "2.1.1"
+val catsEffectVersion = "2.1.2"
+val circeVersion = "0.13.0"
+val http4sVersion = "0.21.1"
+val pureConfigVersion = "0.12.3"
+val redisClientVersion = "3.20"
+val scalaTestVersion = "3.1.1"
+val scalaMockVersion = "4.4.0"
+
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
   "org.typelevel" %% "cats-effect" % catsEffectVersion,
@@ -51,9 +62,10 @@ val commonDependencies = Seq(
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
 )
+
 val testDependencies = Seq(
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-  "org.scalamock" %% "scalamock" % "4.1.0" % Test
+  "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
+  "org.scalamock" %% "scalamock" % scalaMockVersion % Test
 )
 
 lazy val root = project
@@ -81,8 +93,8 @@ lazy val core = project
             "org.http4s" %% "http4s-blaze-client" % http4sVersion,
             "org.http4s" %% "http4s-dsl" % http4sVersion,
             "org.http4s" %% "http4s-circe" % http4sVersion,
-            "com.github.pureconfig" %% "pureconfig" % "0.9.1",
-            "net.debasishg" %% "redisclient" % "3.5"
+            "com.github.pureconfig" %% "pureconfig" % pureConfigVersion,
+            "net.debasishg" %% "redisclient" % redisClientVersion
           )
     )
   )
@@ -121,9 +133,13 @@ lazy val akka = project
         commonDependencies ++
           testDependencies ++
           Seq(
-            "com.typesafe.akka" %% "akka-http" % "10.1.1",
-            "de.heikoseeberger" %% "akka-http-circe" % "1.20.1",
-            "com.typesafe.akka" %% "akka-http-testkit" % "10.1.1" % Test,
+            "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+            "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+            "com.typesafe.akka" %% "akka-protobuf-v3" % akkaVersion,
+            "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+            "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirceVersion,
+            "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+            "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
           )
     )
   )
