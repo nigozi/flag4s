@@ -12,8 +12,7 @@ import org.http4s.client.Client
 import org.http4s.implicits._
 import org.http4s.{HttpRoutes, Response}
 import org.scalatest.wordspec.AnyWordSpec
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import cats.effect.unsafe.implicits.global
 
 class ConsulStoreSpec extends AnyWordSpec with FeatureSpec {
   val store = new ConsulStoreSpec.MockStore
@@ -24,7 +23,7 @@ class ConsulStoreSpec extends AnyWordSpec with FeatureSpec {
       val res = store.get[String]("key").unsafeRunSync()
 
       res.isRight shouldBe true
-      res.right.get shouldBe "value"
+      res.toOption.get shouldBe "value"
     }
     "fail to get a flag" in {
       failingStore.get("key").unsafeRunSync().isLeft shouldBe true
@@ -33,7 +32,7 @@ class ConsulStoreSpec extends AnyWordSpec with FeatureSpec {
       val res = store.put("key", "value").unsafeRunSync()
 
       res.isRight shouldBe true
-      res.right.get shouldBe "value"
+      res.toOption.get shouldBe "value"
     }
     "fail to put a flag" in {
       failingStore.put("key", "value").unsafeRunSync().isLeft shouldBe true
@@ -51,7 +50,6 @@ class ConsulStoreSpec extends AnyWordSpec with FeatureSpec {
 }
 
 object ConsulStoreSpec {
-  implicit val cs: ContextShift[IO] = IO.contextShift(global)
 
   class MockStore extends ConsulStore(null, "host", 8500) {
     val service: HttpRoutes[IO] = HttpRoutes.of[IO] {

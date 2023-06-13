@@ -11,7 +11,6 @@ import io.circe.{Encoder, Json}
 import pureconfig.generic.semiauto._
 import pureconfig.{ConfigReader, ConfigSource}
 
-import scala.concurrent.ExecutionContext
 
 case class Config(features: Map[String, String])
 
@@ -19,7 +18,7 @@ object Config {
   implicit val configReader: ConfigReader[Config] = deriveReader
 }
 
-class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
+class ConfigStore(path: String) extends Store {
   val config: Either[Throwable, Config] =
     ConfigSource.file(new File(path).toPath).load[Config].leftMap(e => error(e.head.description))
 
@@ -41,5 +40,5 @@ class ConfigStore(path: String)(implicit ec: ExecutionContext) extends Store {
 }
 
 object ConfigStore {
-  def apply(configFile: String)(implicit ec: ExecutionContext): ConfigStore = new ConfigStore(configFile)
+  def apply(configFile: String): ConfigStore = new ConfigStore(configFile)
 }

@@ -12,6 +12,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.wordspec.AnyWordSpec
+import cats.effect.unsafe.implicits.global
 
 
 class AkkaFlagApiSpec extends AnyWordSpec with ScalatestRouteTest with FailFastCirceSupport with FeatureSpec {
@@ -71,7 +72,7 @@ class AkkaFlagApiSpec extends AnyWordSpec with ScalatestRouteTest with FailFastC
 
       val saved = store.get[Boolean](key).unsafeRunSync()
       saved.isRight shouldBe true
-      saved.right.get shouldBe true
+      saved.toOption.get shouldBe true
     }
     "remove a flag" in {
       val key = randomKey
@@ -86,5 +87,5 @@ class AkkaFlagApiSpec extends AnyWordSpec with ScalatestRouteTest with FailFastC
     }
   }
 
-  def flagRoute(store: Store): Route = AkkaFlagApi.route()(store, executor)
+  def flagRoute(store: Store): Route = AkkaFlagApi.route()(store)
 }

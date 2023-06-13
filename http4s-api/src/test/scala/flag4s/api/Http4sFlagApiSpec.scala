@@ -1,6 +1,7 @@
 package flag4s.api
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import flag4s.core._
 import flag4s.core.store.Store
 import io.circe.Json
@@ -21,7 +22,7 @@ class Http4sFlagApiSpec extends AnyWordSpec with Http4sClientDsl[IO] with Featur
   "api" should {
     "read a flag" in {
       val key = randomKey
-      val req = GET(Uri.unsafeFromString(s"/flags/$key")).unsafeRunSync()
+      val req = GET(Uri.unsafeFromString(s"/flags/$key"))
       store.put(key, true).unsafeRunSync()
       val res = service.run(req).value.map(_.get)
       val expected = Json.obj(
@@ -34,7 +35,7 @@ class Http4sFlagApiSpec extends AnyWordSpec with Http4sClientDsl[IO] with Featur
     }
     "return 404 if flag not found" in {
       val key = randomKey
-      val req = GET(Uri.unsafeFromString(s"/flags/$key")).unsafeRunSync()
+      val req = GET(Uri.unsafeFromString(s"/flags/$key"))
       val res = service.run(req).value.map(_.get)
 
       statusCheck(res, NotFound) shouldBe true
@@ -43,7 +44,7 @@ class Http4sFlagApiSpec extends AnyWordSpec with Http4sClientDsl[IO] with Featur
       val s = new InMemoryStore
       val key1 = randomKey
       val key2 = randomKey
-      val req = GET(Uri.unsafeFromString("/flags")).unsafeRunSync()
+      val req = GET(Uri.unsafeFromString("/flags"))
       s.put(key1, true).unsafeRunSync()
       s.put(key2, false).unsafeRunSync()
       val res = flagService(s).run(req).value.map(_.get)
@@ -59,17 +60,17 @@ class Http4sFlagApiSpec extends AnyWordSpec with Http4sClientDsl[IO] with Featur
     }
     "save a new flag" in {
       val key = randomKey
-      val req = PUT(Uri.unsafeFromString("/flags")).unsafeRunSync().withEntity(Flag(key, true.asJson).asJson)
+      val req = PUT(Uri.unsafeFromString("/flags")).withEntity(Flag(key, true.asJson).asJson)
       val res = service.run(req).value.map(_.get)
 
       statusCheck(res, Ok) shouldBe true
       val saved = store.get[Boolean](key).unsafeRunSync()
       saved.isRight shouldBe true
-      saved.right.get shouldBe true
+      saved.toOption.get shouldBe true
     }
     "remove a flag" in {
       val key = randomKey
-      val req = DELETE(Uri.unsafeFromString(s"/flags/$key")).unsafeRunSync()
+      val req = DELETE(Uri.unsafeFromString(s"/flags/$key"))
       store.put(key, true).unsafeRunSync()
       val res = service.run(req).value.map(_.get)
 
@@ -80,14 +81,14 @@ class Http4sFlagApiSpec extends AnyWordSpec with Http4sClientDsl[IO] with Featur
       val key = randomKey
       store.put(key, true).unsafeRunSync()
 
-      val req = PUT(Uri.unsafeFromString("/flags")).unsafeRunSync().withEntity(Flag(key, false.asJson).asJson)
+      val req = PUT(Uri.unsafeFromString("/flags")).withEntity(Flag(key, false.asJson).asJson)
       val res = service.run(req).value.map(_.get)
 
       statusCheck(res, Ok) shouldBe true
 
       val current = store.get[Boolean](key).unsafeRunSync()
       current.isRight shouldBe true
-      current.right.get shouldBe false
+      current.toOption.get shouldBe false
     }
   }
 
