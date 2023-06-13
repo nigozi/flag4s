@@ -1,8 +1,8 @@
 package flag4s.api
 
-import scala.concurrent.ExecutionContext
-
 import akka.http.scaladsl.server.Directives
+
+import cats.effect.unsafe.implicits.global
 import cats.effect.IO
 import cats.instances.either._
 import cats.instances.list._
@@ -18,7 +18,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 
 object AkkaFlagApi extends Directives with FailFastCirceSupport {
-  def route(basePath: String = "flags")(implicit store: Store, ec: ExecutionContext) = pathPrefix(basePath) {
+  def route(basePath: String = "flags")(implicit store: Store) = pathPrefix(basePath) {
     path(Segment) { key =>
       get {
         flag(key).unsafeRunSync() match {

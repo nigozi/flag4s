@@ -1,8 +1,7 @@
 package flag4s.core.store
 
-import scala.concurrent.ExecutionContext
-
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import cats.syntax.applicative._
 import cats.syntax.either._
 import com.redis.RedisClient
@@ -14,10 +13,10 @@ import io.circe.syntax._
 import io.circe.parser._
 
 class RedisStore(
-  host: String,
-  port: Int,
-  database: Int = 0,
-  secret: Option[Any] = None)(implicit ec: ExecutionContext)
+                  host: String,
+                  port: Int,
+                  database: Int = 0,
+                  secret: Option[Any] = None)
   extends Store {
 
   def redisClient = new RedisClient(host, port, database, secret)
@@ -49,7 +48,7 @@ class RedisStore(
 }
 
 object RedisStore {
-  def apply(host: String, port: Int)(implicit ec: ExecutionContext): RedisStore =
+  def apply(host: String, port: Int): RedisStore =
     new RedisStore(host, port)
 
   def trim(s: String): String = s.replace("\n", "").trim

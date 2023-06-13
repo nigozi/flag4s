@@ -3,7 +3,7 @@ package flag4s.core.store
 import flag4s.core.FeatureSpec
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import cats.effect.unsafe.implicits.global
 
 class ConfigStoreSpec extends AnyWordSpec with FeatureSpec {
   private val configFile = getClass.getResource("/config/feature_set_1.conf")
@@ -13,19 +13,19 @@ class ConfigStoreSpec extends AnyWordSpec with FeatureSpec {
     "read a boolean key" in {
       val value = store.get[String]("boolFlag").unsafeRunSync()
       value.isRight shouldBe true
-      value.right.get shouldBe "true"
+      value.toOption.get shouldBe "true"
     }
     "read a string key" in {
       val value = store.get[String]("stringFlag").unsafeRunSync()
 
       value.isRight shouldBe true
-      value.right.get shouldBe "on"
+      value.toOption.get shouldBe "on"
     }
     "read a double key" in {
       val value = store.get[String]("doubleFlag").unsafeRunSync()
 
       value.isRight shouldBe true
-      value.right.get shouldBe "1.5"
+      value.toOption.get shouldBe "1.5"
     }
     "not be able to update a value" in {
       val res = store.put("boolFlag", false).unsafeRunSync()

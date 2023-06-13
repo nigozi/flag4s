@@ -3,6 +3,7 @@ package flag4s.core
 import java.util.UUID
 
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import cats.syntax.applicative._
 import flag4s.core.store.{Store, StoredValue}
 import io.circe.generic.auto._
@@ -24,7 +25,7 @@ trait FeatureSpec
   def statusCheck(actual: IO[Response[IO]], expected: Status): Boolean = actual.unsafeRunSync().status == expected
 
   def bodyCheck[A](actual: IO[Response[IO]], expected: A)(implicit ev: EntityDecoder[IO, A]): Boolean = {
-    val act = actual.unsafeRunSync().as[A].unsafeRunSync
+    val act = actual.unsafeRunSync().as[A].unsafeRunSync()
     act == expected
   }
 }

@@ -6,7 +6,7 @@ import com.redis.serialization.{Format, Parse}
 import flag4s.core.FeatureSpec
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import cats.effect.unsafe.implicits.global
 import scala.concurrent.duration.Duration
 
 class RedisStoreSpec
@@ -36,7 +36,7 @@ class RedisStoreSpec
       val res = store.keys().unsafeRunSync()
 
       res.isRight shouldBe true
-      res.right.get should contain allElementsOf List("key")
+      res.toOption.get should contain allElementsOf List("key")
     }
 
     "fail to get key/vals" in {

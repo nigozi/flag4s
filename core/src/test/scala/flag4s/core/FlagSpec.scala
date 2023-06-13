@@ -2,6 +2,7 @@ package flag4s.core
 
 import io.circe.syntax._
 import org.scalatest.wordspec.AnyWordSpec
+import cats.effect.unsafe.implicits.global
 
 import scala.util.Try
 
@@ -15,7 +16,7 @@ class FlagSpec extends AnyWordSpec with FeatureSpec with FlagOps {
       val res = flag(key).unsafeRunSync()
 
       res.isRight shouldBe true
-      res.right.get.value shouldBe true.asJson
+      res.toOption.get.value shouldBe true.asJson
     }
     "return proper response if flag doesn't exist" in {
       flag("non-existing").unsafeRunSync().isLeft shouldBe true
@@ -52,7 +53,7 @@ class FlagSpec extends AnyWordSpec with FeatureSpec with FlagOps {
       val r = ifEnabled(f)("flag is on").unsafeRunSync()
 
       r.isRight shouldBe true
-      r.right.get shouldBe "flag is on"
+      r.toOption.get shouldBe "flag is on"
     }
     "return left if flag is disabled" in {
       val key = randomKey
@@ -95,7 +96,7 @@ class FlagSpec extends AnyWordSpec with FeatureSpec with FlagOps {
       val r = ifIs(f, "foo")(true).unsafeRunSync()
 
       r.isRight shouldBe true
-      r.right.get shouldBe true
+      r.toOption.get shouldBe true
     }
     "not execute function if values don't match" in {
       val key = randomKey
@@ -112,7 +113,7 @@ class FlagSpec extends AnyWordSpec with FeatureSpec with FlagOps {
       val r = store.get[String](key).unsafeRunSync()
 
       r.isRight shouldBe true
-      r.right.get shouldBe "bar"
+      r.toOption.get shouldBe "bar"
     }
     "return left if failed to set the flag's value" in {
       val key = randomKey
@@ -127,7 +128,7 @@ class FlagSpec extends AnyWordSpec with FeatureSpec with FlagOps {
       val res = store.get[Boolean](key).unsafeRunSync()
 
       res.isRight shouldBe true
-      res.right.get shouldBe true
+      res.toOption.get shouldBe true
     }
     "not create a new flag if it already exists" in {
       val key = randomKey
@@ -152,7 +153,7 @@ class FlagSpec extends AnyWordSpec with FeatureSpec with FlagOps {
       store.put(key, false).unsafeRunSync()
 
       switchFlag(key, true).unsafeRunSync().isRight shouldBe true
-      store.get[Boolean](key).unsafeRunSync().right.get shouldBe true
+      store.get[Boolean](key).unsafeRunSync().toOption.get shouldBe true
     }
     "switchFlag should not change the flag's value if types mismatch" in {
       val key = randomKey
