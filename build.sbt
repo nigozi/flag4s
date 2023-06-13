@@ -3,10 +3,9 @@ import ReleaseTransformations._
 
 name := "flag4s"
 
-scalaVersion in ThisBuild := "2.12.11"
+ThisBuild / scalaVersion := "2.13.11"
 
-scalacOptions in ThisBuild ++= Seq(
-  "-Ypartial-unification",
+ThisBuild / scalacOptions ++= Seq(
   "-deprecation"
 )
 
@@ -15,20 +14,20 @@ lazy val publishSettings = Seq(
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
+      Some("snapshots" at nexus + "content/repositories/snapshots")
     else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
   },
   scmInfo := Some(ScmInfo(url("https://github.com/nigozi/flag4s"), "git@github.com:nigozi/flag4s.git")),
   licenses := List("MIT" -> url("http://opensource.org/licenses/MIT")),
   homepage := Some(url("https://github.com/nigozi/flag4s")),
   developers := List(Developer("nigozi", "Nima Goodarzi", "nima@nigo.io", url("https://github.com/nigozi"))),
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   sonatypeProfileName := "io.nigo",
   publishMavenStyle := true
 )
 
-lazy val releaseSettings = Seq (
+lazy val releaseSettings = Seq(
   releaseProcess := Seq[ReleaseStep](
     checkSnapshotDependencies,
     inquireVersions,
@@ -43,17 +42,18 @@ lazy val releaseSettings = Seq (
   )
 )
 
-val akkaVersion = "2.6.4"
-val akkaHttpVersion = "10.1.11"
-val akkaHttpCirceVersion = "1.31.0"
-val catsVersion = "2.1.1"
-val catsEffectVersion = "2.1.2"
-val circeVersion = "0.13.0"
-val http4sVersion = "0.21.1"
-val pureConfigVersion = "0.12.3"
-val redisClientVersion = "3.20"
-val scalaTestVersion = "3.1.1"
-val scalaMockVersion = "4.4.0"
+val akkaVersion = "2.6.20"
+val akkaHttpVersion = "10.2.7"
+val akkaHttpCirceVersion = "1.40.0-RC3"
+val catsVersion = "2.8.0"
+val catsEffectVersion = "3.4.5"
+val circeVersion = "0.14.5"
+val http4sVersion = "0.23.18"
+val http4sBlazeVersion = "0.23.14"
+val pureConfigVersion = "0.17.2"
+val redisClientVersion = "3.42"
+val scalaTestVersion = "3.2.16"
+val scalaMockVersion = "5.2.0"
 
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
@@ -83,20 +83,20 @@ lazy val core = project
     publishSettings ++
       releaseSettings ++
       List(
-      description := "flag4s core",
-      name := "flag4s-core",
-      libraryDependencies ++=
-        commonDependencies ++
-          testDependencies ++
-          List(
-            "org.http4s" %% "http4s-core" % http4sVersion,
-            "org.http4s" %% "http4s-blaze-client" % http4sVersion,
-            "org.http4s" %% "http4s-dsl" % http4sVersion,
-            "org.http4s" %% "http4s-circe" % http4sVersion,
-            "com.github.pureconfig" %% "pureconfig" % pureConfigVersion,
-            "net.debasishg" %% "redisclient" % redisClientVersion
-          )
-    )
+        description := "flag4s core",
+        name := "flag4s-core",
+        libraryDependencies ++=
+          commonDependencies ++
+            testDependencies ++
+            List(
+              "org.http4s" %% "http4s-core" % http4sVersion,
+              "org.http4s" %% "http4s-blaze-client" % http4sBlazeVersion,
+              "org.http4s" %% "http4s-dsl" % http4sVersion,
+              "org.http4s" %% "http4s-circe" % http4sVersion,
+              "com.github.pureconfig" %% "pureconfig" % pureConfigVersion,
+              "net.debasishg" %% "redisclient" % redisClientVersion
+            )
+      )
   )
 
 lazy val http4s = project
@@ -105,19 +105,19 @@ lazy val http4s = project
   .settings(
     publishSettings ++
       releaseSettings ++
-        List(
-          description := "flag4s api for http4s",
-          name := "flag4s-api-http4s",
-          libraryDependencies ++=
-            commonDependencies ++
-              testDependencies ++
-              Seq(
-                "org.http4s" %% "http4s-core" % http4sVersion,
-                "org.http4s" %% "http4s-blaze-server" % http4sVersion,
-                "org.http4s" %% "http4s-dsl" % http4sVersion,
-                "org.http4s" %% "http4s-circe" % http4sVersion
-              )
-    )
+      List(
+        description := "flag4s api for http4s",
+        name := "flag4s-api-http4s",
+        libraryDependencies ++=
+          commonDependencies ++
+            testDependencies ++
+            Seq(
+              "org.http4s" %% "http4s-core" % http4sVersion,
+              "org.http4s" %% "http4s-blaze-server" % http4sBlazeVersion,
+              "org.http4s" %% "http4s-dsl" % http4sVersion,
+              "org.http4s" %% "http4s-circe" % http4sVersion
+            )
+      )
   )
 
 lazy val akka = project
@@ -127,19 +127,19 @@ lazy val akka = project
     publishSettings ++
       releaseSettings ++
       List(
-      description := "akka http api for http4s",
-      name := "flag4s-api-akka-http",
-      libraryDependencies ++=
-        commonDependencies ++
-          testDependencies ++
-          Seq(
-            "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-            "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-            "com.typesafe.akka" %% "akka-protobuf-v3" % akkaVersion,
-            "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
-            "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirceVersion,
-            "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-            "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
-          )
-    )
+        description := "akka http api for http4s",
+        name := "flag4s-api-akka-http",
+        libraryDependencies ++=
+          commonDependencies ++
+            testDependencies ++
+            Seq(
+              "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+              "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+              "com.typesafe.akka" %% "akka-protobuf-v3" % akkaVersion,
+              "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+              "de.heikoseeberger" %% "akka-http-circe" % akkaHttpCirceVersion,
+              "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+              "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
+            )
+      )
   )
